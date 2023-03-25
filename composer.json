@@ -14,6 +14,7 @@
         "barryvdh/laravel-debugbar": "^3.6",
         "barryvdh/laravel-dompdf": "^0.9.0",
         "brian2694/laravel-toastr": "^5.54",
+        "carlos-meneses/laravel-mpdf": "^2.1",
         "dgvai/laravel-sslcommerz": "^1.0",
         "doctrine/dbal": "^2.0",
         "fideloper/proxy": "^4.2",
@@ -69,7 +70,9 @@
             "app/CentralLogics/helpers.php",
             "app/CentralLogics/order.php",
             "app/CentralLogics/sms_module.php",
-            "app/CentralLogics/translation.php"
+            "app/CentralLogics/translation.php",
+            "app/CentralLogics/CustomerLogic.php",
+            "app/CentralLogics/CouponLogic.php"
         ],
         "psr-4": {
             "App\\": "app/"
