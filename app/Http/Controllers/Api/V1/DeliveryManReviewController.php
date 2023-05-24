@@ -6,29 +6,43 @@ use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
 use App\Model\DeliveryMan;
 use App\Model\DMReview;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class DeliveryManReviewController extends Controller
 {
-    public function get_reviews($id)
+    public function __construct(
+        private DeliveryMan $delivery_man,
+        private DMReview $dm_review
+    ){}
+
+    /**
+     * @param $id
+     * @return JsonResponse
+     */
+    public function get_reviews($id): \Illuminate\Http\JsonResponse
     {
-        $reviews = DMReview::with(['customer', 'delivery_man'])->where(['delivery_man_id' => $id])->get();
+        $reviews = $this->dm_review->with(['customer', 'delivery_man'])->where(['delivery_man_id' => $id])->get();
 
         $storage = [];
         foreach ($reviews as $item) {
             $item['attachment'] = json_decode($item['attachment']);
-            array_push($storage, $item);
+            $storage[] = $item;
         }
 
         return response()->json($storage, 200);
     }
 
-    public function get_rating($id)
+    /**
+     * @param $id
+     * @return JsonResponse
+     */
+    public function get_rating($id): \Illuminate\Http\JsonResponse
     {
         try {
-            $totalReviews = DMReview::where(['delivery_man_id' => $id])->get();
+            $totalReviews = $this->dm_review->where(['delivery_man_id' => $id])->get();
             $rating = 0;
             foreach ($totalReviews as $key => $review) {
                 $rating += $review->rating;
@@ -46,7 +60,11 @@ class DeliveryManReviewController extends Controller
         }
     }
 
-    public function submit_review(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function submit_review(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'delivery_man_id' => 'required',
@@ -55,8 +73,8 @@ class DeliveryManReviewController extends Controller
             'rating' => 'required|numeric|max:5',
         ]);
 
-        $dm = DeliveryMan::find($request->delivery_man_id);
-        if (isset($dm) == false) {
+        $dm = $this->delivery_man->find($request->delivery_man_id);
+        if (!isset($dm)) {
             $validator->errors()->add('delivery_man_id', 'There is no such delivery man!');
         }
 
@@ -71,12 +89,12 @@ class DeliveryManReviewController extends Controller
                     if (!Storage::disk('public')->exists('review')) {
                         Storage::disk('public')->makeDirectory('review');
                     }
-                    array_push($image_array, Storage::disk('public')->put('review', $image));
+                    $image_array[] = Storage::disk('public')->put('review', $image);
                 }
             }
         }
 
-        $multi_review = DMReview::where([
+        $multi_review = $this->dm_review->where([
             'delivery_man_id' => $request->delivery_man_id,
             'order_id' => $request->order_id,
             'user_id' => $request->user()->id
@@ -84,7 +102,7 @@ class DeliveryManReviewController extends Controller
         if (isset($multi_review)) {
             $review = $multi_review;
         } else {
-            $review = new DMReview();
+            $review = $this->dm_review;
         }
         $review->user_id = $request->user()->id;
         $review->delivery_man_id = $request->delivery_man_id;

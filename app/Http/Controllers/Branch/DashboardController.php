@@ -7,15 +7,28 @@ use App\Model\Order;
 use App\Model\OrderDetail;
 use App\Model\Review;
 use Carbon\CarbonPeriod;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function dashboard()
+    public function __construct(
+        private Order $order,
+        private OrderDetail $order_detail,
+        private Review $review
+    ){}
+
+    /**
+     * @return Factory|View|Application
+     */
+    public function dashboard(): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
-        $top_sell = OrderDetail::whereHas('order', function ($q){
+        $top_sell = $this->order_detail->whereHas('order', function ($q){
             $q->where('branch_id', auth('branch')->id());
         })->with(['product'])
             ->select('product_id', DB::raw('SUM(quantity) as count'))
@@ -25,7 +38,7 @@ class DashboardController extends Controller
             ->get();
 
 
-        $most_rated_products = Review::with(['product'])
+        $most_rated_products = $this->review->with(['product'])
             ->select(['product_id',
                 DB::raw('AVG(rating) as ratings_average'),
                 DB::raw('COUNT(rating) as total'),
@@ -36,7 +49,7 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $top_customer = Order::with(['customer'])
+        $top_customer = $this->order->with(['customer'])
             ->where('branch_id', auth('branch')->id())
             ->select('user_id', DB::raw('COUNT(user_id) as count'))
             ->groupBy('user_id')
@@ -50,14 +63,14 @@ class DashboardController extends Controller
         $data['most_rated_products'] = $most_rated_products;
         $data['top_customer'] = $top_customer;
 
-        $data['pending_count'] = Order::where(['order_status' => 'pending', 'branch_id' => auth('branch')->id()])->count();
-        $data['ongoing_count'] = Order::whereIn('order_status', ['confirmed', 'processing', 'out_for_delivery'])->where(['branch_id' => auth('branch')->id()])->count();
-        $data['delivered_count'] = Order::where(['order_status' => 'delivered', 'branch_id' => auth('branch')->id()])->count();
-        $data['canceled_count'] = Order::where(['order_status' => 'canceled', 'branch_id' => auth('branch')->id()])->count();
-        $data['returned_count'] = Order::where(['order_status' => 'returned', 'branch_id' => auth('branch')->id()])->count();
-        $data['failed_count'] = Order::where(['order_status' => 'failed', 'branch_id' => auth('branch')->id()])->count();
+        $data['pending_count'] = $this->order->where(['order_status' => 'pending', 'branch_id' => auth('branch')->id()])->count();
+        $data['ongoing_count'] = $this->order->whereIn('order_status', ['confirmed', 'processing', 'out_for_delivery'])->where(['branch_id' => auth('branch')->id()])->count();
+        $data['delivered_count'] = $this->order->where(['order_status' => 'delivered', 'branch_id' => auth('branch')->id()])->count();
+        $data['canceled_count'] = $this->order->where(['order_status' => 'canceled', 'branch_id' => auth('branch')->id()])->count();
+        $data['returned_count'] = $this->order->where(['order_status' => 'returned', 'branch_id' => auth('branch')->id()])->count();
+        $data['failed_count'] = $this->order->where(['order_status' => 'failed', 'branch_id' => auth('branch')->id()])->count();
 
-        $data['recent_orders'] = Order::where('branch_id', auth('branch')->id())->latest()->take(5)->get(['id', 'created_at', 'order_status']);
+        $data['recent_orders'] = $this->order->notPos()->where('branch_id', auth('branch')->id())->latest()->take(5)->get(['id', 'created_at', 'order_status']);
 
         $from = \Carbon\Carbon::now()->startOfYear()->format('Y-m-d');
         $to = Carbon::now()->endOfYear()->format('Y-m-d');
@@ -65,7 +78,7 @@ class DashboardController extends Controller
         /*earning statistics chart*/
 
         $earning = [];
-        $earning_data = Order::where(['order_status' => 'delivered', 'branch_id' => auth('branch')->id()])->select(
+        $earning_data = $this->order->where(['order_status' => 'delivered', 'branch_id' => auth('branch')->id()])->select(
             DB::raw('IFNULL(sum(order_amount),0) as sums'),
             DB::raw('YEAR(created_at) year, MONTH(created_at) month')
         )->whereBetween('created_at', [$from, $to])->groupby('year', 'month')->get()->toArray();
@@ -82,7 +95,7 @@ class DashboardController extends Controller
         /*order statistics chart*/
 
         $order_statistics_chart = [];
-        $order_statistics_chart_data = Order::where(['order_status' => 'delivered', 'branch_id' => auth('branch')->id()])
+        $order_statistics_chart_data = $this->order->where(['order_status' => 'delivered', 'branch_id' => auth('branch')->id()])
             ->select(
                 DB::raw('(count(id)) as total'),
                 DB::raw('YEAR(created_at) year, MONTH(created_at) month')
@@ -101,7 +114,11 @@ class DashboardController extends Controller
         return view('branch-views.dashboard', compact('data', 'earning', 'order_statistics_chart'));
     }
 
-    public function order_stats(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function order_stats(Request $request): \Illuminate\Http\JsonResponse
     {
         session()->put('statistics_type', $request['statistics_type']);
         $data = self::order_stats_data();
@@ -111,11 +128,15 @@ class DashboardController extends Controller
         ], 200);
     }
 
-    public function order_stats_data() {
+    /**
+     * @return array
+     */
+    public function order_stats_data(): array
+    {
         $today = session()->has('statistics_type') && session('statistics_type') == 'today' ? 1 : 0;
         $this_month = session()->has('statistics_type') && session('statistics_type') == 'this_month' ? 1 : 0;
 
-        $pending = Order::where(['order_status'=>'pending','branch_id'=>auth('branch')->id()])
+        $pending = $this->order->where(['order_status'=>'pending','branch_id'=>auth('branch')->id()])
             ->when($today, function ($query) {
                 return $query->whereDate('created_at', Carbon::today());
             })
@@ -123,7 +144,7 @@ class DashboardController extends Controller
                 return $query->whereMonth('created_at', Carbon::now());
             })
             ->count();
-        $confirmed = Order::where(['order_status'=>'confirmed','branch_id'=>auth('branch')->id()])
+        $confirmed = $this->order->where(['order_status'=>'confirmed','branch_id'=>auth('branch')->id()])
             ->when($today, function ($query) {
                 return $query->whereDate('created_at', Carbon::today());
             })
@@ -131,7 +152,7 @@ class DashboardController extends Controller
                 return $query->whereMonth('created_at', Carbon::now());
             })
             ->count();
-        $processing = Order::where(['order_status'=>'processing','branch_id'=>auth('branch')->id()])
+        $processing = $this->order->where(['order_status'=>'processing','branch_id'=>auth('branch')->id()])
             ->when($today, function ($query) {
                 return $query->whereDate('created_at', Carbon::today());
             })
@@ -139,48 +160,7 @@ class DashboardController extends Controller
                 return $query->whereMonth('created_at', Carbon::now());
             })
             ->count();
-        $out_for_delivery = Order::where(['order_status'=>'out_for_delivery','branch_id'=>auth('branch')->id()])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->count();
-
-        $delivered = Order::where(['order_status'=>'delivered','branch_id'=>auth('branch')->id()])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->count();
-        $all = Order::where(['branch_id'=>auth('branch')->id()])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->count();
-        $returned = Order::where(['order_status'=>'returned','branch_id'=>auth('branch')->id()])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->count();
-        $failed = Order::where(['order_status'=>'failed','branch_id'=>auth('branch')->id()])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->count();
-        $canceled = Order::where(['order_status' => 'canceled', 'branch_id'=>auth('branch')->id()])
+        $out_for_delivery = $this->order->where(['order_status'=>'out_for_delivery','branch_id'=>auth('branch')->id()])
             ->when($today, function ($query) {
                 return $query->whereDate('created_at', Carbon::today());
             })
@@ -189,7 +169,48 @@ class DashboardController extends Controller
             })
             ->count();
 
-        $data = [
+        $delivered = $this->order->where(['order_status'=>'delivered','branch_id'=>auth('branch')->id()])
+            ->when($today, function ($query) {
+                return $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($this_month, function ($query) {
+                return $query->whereMonth('created_at', Carbon::now());
+            })
+            ->count();
+        $all = $this->order->where(['branch_id'=>auth('branch')->id()])
+            ->when($today, function ($query) {
+                return $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($this_month, function ($query) {
+                return $query->whereMonth('created_at', Carbon::now());
+            })
+            ->count();
+        $returned = $this->order->where(['order_status'=>'returned','branch_id'=>auth('branch')->id()])
+            ->when($today, function ($query) {
+                return $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($this_month, function ($query) {
+                return $query->whereMonth('created_at', Carbon::now());
+            })
+            ->count();
+        $failed = $this->order->where(['order_status'=>'failed','branch_id'=>auth('branch')->id()])
+            ->when($today, function ($query) {
+                return $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($this_month, function ($query) {
+                return $query->whereMonth('created_at', Carbon::now());
+            })
+            ->count();
+        $canceled = $this->order->where(['order_status' => 'canceled', 'branch_id'=>auth('branch')->id()])
+            ->when($today, function ($query) {
+                return $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($this_month, function ($query) {
+                return $query->whereMonth('created_at', Carbon::now());
+            })
+            ->count();
+
+        return $data = [
             'pending' => $pending,
             'confirmed' => $confirmed,
             'processing' => $processing,
@@ -200,14 +221,13 @@ class DashboardController extends Controller
             'failed' => $failed,
             'canceled' => $canceled
         ];
-
-        return $data;
     }
 
     /**
      * filter order statistics in week, month, year by ajax
      */
-    public function get_order_statitics(Request $request){
+    public function get_order_statitics(Request $request): \Illuminate\Http\JsonResponse
+    {
         $dateType = $request->type;
 
         $order_data = array();
@@ -216,7 +236,7 @@ class DashboardController extends Controller
             $from = Carbon::now()->startOfYear()->format('Y-m-d');
             $to = Carbon::now()->endOfYear()->format('Y-m-d');
 
-            $orders = Order::where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
+            $orders = $this->order->where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
                 ->select(
                     DB::raw('(count(id)) as total'),
                     DB::raw('YEAR(created_at) year, MONTH(created_at) month')
@@ -238,7 +258,7 @@ class DashboardController extends Controller
             $number = date('d',strtotime($to));
             $key_range = range(1, $number);
 
-            $orders = Order::where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
+            $orders = $this->order->where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
                 ->select(
                     DB::raw('(count(id)) as total'),
                     DB::raw('YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
@@ -270,7 +290,7 @@ class DashboardController extends Controller
             $day_range_intKeys = array_map('intval', $day_range_keys);
             $day_range = array_combine($day_range_intKeys, $day_range_values);
 
-            $orders = Order::where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
+            $orders = $this->order->where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
                 ->select(
                     DB::raw('(count(id)) as total'),
                     DB::raw('YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
@@ -304,7 +324,8 @@ class DashboardController extends Controller
     /**
      * filter earning statistics in week, month, year by ajax
      */
-    public function get_earning_statitics(Request $request){
+    public function get_earning_statitics(Request $request): \Illuminate\Http\JsonResponse
+    {
         $dateType = $request->type;
 
         $earning_data = array();
@@ -313,7 +334,7 @@ class DashboardController extends Controller
             $from = Carbon::now()->startOfYear()->format('Y-m-d');
             $to = Carbon::now()->endOfYear()->format('Y-m-d');
 
-            $earning = Order::where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
+            $earning = $this->order->where(['order_status' => 'delivered', 'branch_id'=>auth('branch')->id()])
             ->select(
                 DB::raw('IFNULL(sum(order_amount),0) as sums'),
                 DB::raw('YEAR(created_at) year, MONTH(created_at) month')
@@ -336,7 +357,7 @@ class DashboardController extends Controller
             $number = date('d',strtotime($to));
             $key_range = range(1, $number);
 
-            $earning = Order::where([
+            $earning = $this->order->where([
                 'order_status' => 'delivered', 'branch_id'=>auth('branch')->id()
             ])->select(
                 DB::raw('IFNULL(sum(order_amount),0) as sums'),
@@ -369,7 +390,7 @@ class DashboardController extends Controller
             $day_range_intKeys = array_map('intval', $day_range_keys);
             $day_range = array_combine($day_range_intKeys, $day_range_values);
 
-            $earning = Order::where([
+            $earning = $this->order->where([
                 'order_status' => 'delivered', 'branch_id'=>auth('branch')->id()
             ])->select(
                 DB::raw('IFNULL(sum(order_amount),0) as sums'),

@@ -21,20 +21,20 @@
 
             <div class="mb-3 text-dark">
                 <span class="h3 font-weight-normal text-accent mr-1">
-                    {{ Helpers::set_symbol($product['price']- \App\CentralLogics\Helpers::discount_calculate($product, $product['price'])) }}
+                    {{ Helpers::set_symbol($product['price']- $discount) }}
                 </span>
-                @if($product->discount > 0)
+                @if($discount > 0)
                     <strike style="font-size: 12px!important;">
                         {{ Helpers::set_symbol($product['price']) }}
                     </strike>
                 @endif
             </div>
 
-            @if($product->discount > 0)
+            @if($discount > 0)
                 <div class="mb-3 text-dark">
                     <strong>{{ translate('Discount') }} : </strong>
                     <strong
-                        id="set-discount-amount">{{ Helpers::set_symbol(\App\CentralLogics\Helpers::discount_calculate($product, $product->price)) }}</strong>
+                        id="set-discount-amount">{{ $discount }}</strong>
                 </div>
             @endif
         <!-- Product panels-->
@@ -98,6 +98,7 @@
                                         <i class="tio-remove  font-weight-bold"></i>
                                 </button>
                             </span>
+                            <input type="hidden" id="check_max_qty" value="{{ $product['total_stock'] }}">
                             <input type="text" name="quantity"
                                    class="form-control input-number text-center cart-qty-field"
                                    placeholder="{{ translate('1') }}" value="1" min="1" max="100">

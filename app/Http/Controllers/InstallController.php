@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
 
 class InstallController extends Controller
 {
@@ -92,11 +93,17 @@ class InstallController extends Controller
             return redirect()->route('step0');
         }
 
+        Validator::make($request->all(),[
+            'password' => 'required|min:8',
+            'confirm_password' => 'required|same:password',
+        ])->validate();
+
         DB::table('admins')->insertOrIgnore([
-            'f_name' => $request['admin_name'],
+            'f_name' => $request['admin_f_name'],
+            'l_name' => $request['admin_l_name'],
             'email' => $request['admin_email'],
-            'password' => bcrypt($request['admin_password']),
-            'phone' => $request['admin_phone'],
+            'password' => bcrypt($request['password']),
+            'phone' => $request['phone_code'] . $request['admin_phone'],
             'admin_role_id' => 1,
             'created_at' => now(),
             'updated_at' => now()
@@ -171,7 +178,7 @@ class InstallController extends Controller
                     PURCHASE_CODE=' . session('purchase_key') . '
                     BUYER_USERNAME=' . session('username') . '
                     SOFTWARE_ID=MzI3OTE2MzE=
-                    SOFTWARE_VERSION=6.0
+                    SOFTWARE_VERSION=7.0
                     ';
             $file = fopen(base_path('.env'), 'w');
             fwrite($file, $output);

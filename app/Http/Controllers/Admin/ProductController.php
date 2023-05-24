@@ -6,21 +6,46 @@ use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
 use App\Model\BusinessSetting;
 use App\Model\Category;
+use App\Model\FlashDealProduct;
 use App\Model\Product;
 use App\Model\Review;
+use App\Model\Tag;
 use App\Model\Translation;
+use Box\Spout\Common\Exception\InvalidArgumentException;
+use Box\Spout\Common\Exception\IOException;
+use Box\Spout\Common\Exception\UnsupportedTypeException;
+use Box\Spout\Writer\Exception\WriterNotOpenedException;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Facades\Image;
 use Rap2hpoutre\FastExcel\FastExcel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProductController extends Controller
 {
-    public function variant_combination(Request $request)
+    public function __construct(
+        private BusinessSetting $business_setting,
+        private Category $category,
+        private Product $product,
+        private Review $review,
+        private Tag $tag,
+        private Translation $translation
+    ){}
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function variant_combination(Request $request): \Illuminate\Http\JsonResponse
     {
         $options = [];
         $price = $request->price;
@@ -30,7 +55,7 @@ class ProductController extends Controller
             foreach ($request->choice_no as $key => $no) {
                 $name = 'choice_options_' . $no;
                 $my_str = implode('', $request[$name]);
-                array_push($options, explode(',', $my_str));
+                $options[] = explode(',', $my_str);
             }
         }
 
@@ -50,9 +75,13 @@ class ProductController extends Controller
         ]);
     }
 
-    public function get_categories(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function get_categories(Request $request): \Illuminate\Http\JsonResponse
     {
-        $cat = Category::where(['parent_id' => $request->parent_id])->get();
+        $cat = $this->category->where(['parent_id' => $request->parent_id])->get();
         $res = '<option value="' . 0 . '" disabled selected>---Select---</option>';
         foreach ($cat as $row) {
             if ($row->id == $request->sub_category) {
@@ -66,19 +95,26 @@ class ProductController extends Controller
         ]);
     }
 
-    public function index()
+    /**
+     * @return Factory|View|Application
+     */
+    public function index(): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
-        $categories = Category::where(['position' => 0])->get();
+        $categories = $this->category->where(['position' => 0])->get();
         return view('admin-views.product.index', compact('categories'));
     }
 
-    public function list(Request $request)
+    /**
+     * @param Request $request
+     * @return Factory|View|Application
+     */
+    public function list(Request $request): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
         $query_param = [];
         $search = $request['search'];
         if ($request->has('search')) {
             $key = explode(' ', $request['search']);
-            $query = Product::where(function ($q) use ($key) {
+            $query = $this->product->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('name', 'like', "%{$value}%");
@@ -86,7 +122,7 @@ class ProductController extends Controller
             })->latest();
             $query_param = ['search' => $request['search']];
         }else{
-            $query = Product::latest();
+            $query = $this->product->latest();
         }
         $products = $query->with('order_details.order')->paginate(Helpers::getPagination())->appends($query_param);
 
@@ -103,10 +139,14 @@ class ProductController extends Controller
         return view('admin-views.product.list', compact('products','search'));
     }
 
-    public function search(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function search(Request $request): \Illuminate\Http\JsonResponse
     {
         $key = explode(' ', $request['search']);
-        $products = Product::where(function ($q) use ($key) {
+        $products = $this->product->where(function ($q) use ($key) {
             foreach ($key as $value) {
                 $q->orWhere('name', 'like', "%{$value}%");
             }
@@ -116,16 +156,23 @@ class ProductController extends Controller
         ]);
     }
 
-    public function view($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function view($id): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
-        $product = Product::where(['id' => $id])->first();
-        $reviews = Review::where(['product_id' => $id])->latest()->paginate(20);
+        $product = $this->product->where(['id' => $id])->first();
+        $reviews = $this->review->where(['product_id' => $id])->latest()->paginate(20);
         return view('admin-views.product.view', compact('product', 'reviews'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
-        //dd($request->status);
         $validator = Validator::make($request->all(), [
             'name' => 'required|unique:products',
             'category_id' => 'required',
@@ -152,34 +199,48 @@ class ProductController extends Controller
         if (!empty($request->file('images'))) {
             foreach ($request->images as $img) {
                 $image_data = Helpers::upload('product/', 'png', $img);
-                array_push($img_names, $image_data);
+                $img_names[] = $image_data;
             }
             $image_data = json_encode($img_names);
         } else {
             $image_data = json_encode([]);
         }
 
-        $p = new Product;
+        $tag_ids = [];
+        if ($request->tags != null) {
+            $tags = explode(",", $request->tags);
+        }
+        if(isset($tags)){
+            foreach ($tags as $key => $value) {
+                $tag = $this->tag->firstOrNew(
+                    ['tag' => $value]
+                );
+                $tag->save();
+                $tag_ids[] = $tag->id;
+            }
+        }
+
+        $p = $this->product;
         $p->name = $request->name[array_search('en', $request->lang)];
 
         $category = [];
         if ($request->category_id != null) {
-            array_push($category, [
+            $category[] = [
                 'id' => $request->category_id,
                 'position' => 1,
-            ]);
+            ];
         }
         if ($request->sub_category_id != null) {
-            array_push($category, [
+            $category[] = [
                 'id' => $request->sub_category_id,
                 'position' => 2,
-            ]);
+            ];
         }
         if ($request->sub_sub_category_id != null) {
-            array_push($category, [
+            $category[] = [
                 'id' => $request->sub_sub_category_id,
                 'position' => 3,
-            ]);
+            ];
         }
 
         $p->category_ids = json_encode($category);
@@ -196,7 +257,7 @@ class ProductController extends Controller
                 $item['name'] = 'choice_' . $no;
                 $item['title'] = $request->choice[$key];
                 $item['options'] = explode(',', implode('|', preg_replace('/\s+/', ' ', $request[$str])));
-                array_push($choice_options, $item);
+                $choice_options[] = $item;
             }
         }
 
@@ -228,7 +289,12 @@ class ProductController extends Controller
                 $item['type'] = $str;
                 $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
                 $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
-                array_push($variations, $item);
+
+                if ($request['discount_type'] == 'amount' && $item['price'] <= $request['discount'] ){
+                    $validator->getMessageBag()->add('discount_mismatch', 'Discount can not be more or equal to the price. Please change variant '. $item['type'] .' price or change discount amount!');
+                }
+
+                $variations[] = $item;
                 $stock_count += $item['stock'];
             }
         } else {
@@ -249,6 +315,7 @@ class ProductController extends Controller
         $p->unit = $request->unit;
         $p->image = $image_data;
         $p->capacity = $request->capacity;
+        $p->maximum_order_quantity = $request->maximum_order_quantity;
         // $p->set_menu = $request->item_type;
 
         $p->tax = $request->tax_type == 'amount' ? $request->tax : $request->tax;
@@ -263,63 +330,95 @@ class ProductController extends Controller
 
         $p->save();
 
+        $p->tags()->sync($tag_ids);
+
         $data = [];
         foreach($request->lang as $index=>$key)
         {
             if($request->name[$index] && $key != 'en')
             {
-                array_push($data, Array(
-                    'translationable_type'  => 'App\Model\Product',
-                    'translationable_id'    => $p->id,
-                    'locale'                => $key,
-                    'key'                   => 'name',
-                    'value'                 => $request->name[$index],
-                ));
+                $data[] = array(
+                    'translationable_type' => 'App\Model\Product',
+                    'translationable_id' => $p->id,
+                    'locale' => $key,
+                    'key' => 'name',
+                    'value' => $request->name[$index],
+                );
             }
             if($request->description[$index] && $key != 'en')
             {
-                array_push($data, Array(
-                    'translationable_type'  => 'App\Model\Product',
-                    'translationable_id'    => $p->id,
-                    'locale'                => $key,
-                    'key'                   => 'description',
-                    'value'                 => $request->description[$index],
-                ));
+                $data[] = array(
+                    'translationable_type' => 'App\Model\Product',
+                    'translationable_id' => $p->id,
+                    'locale' => $key,
+                    'key' => 'description',
+                    'value' => $request->description[$index],
+                );
             }
         }
 
 
-        Translation::insert($data);
+        $this->translation->insert($data);
 
         return response()->json([], 200);
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function edit($id): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
-        $product = Product::withoutGlobalScopes()->with('translations')->find($id);
+        $product = $this->product->withoutGlobalScopes()->with('translations')->find($id);
         $product_category = json_decode($product->category_ids);
-        $categories = Category::where(['parent_id' => 0])->get();
+        $categories = $this->category->where(['parent_id' => 0])->get();
         return view('admin-views.product.edit', compact('product', 'product_category', 'categories'));
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $product = Product::find($request->id);
+        $product = $this->product->find($request->id);
         $product->status = $request->status;
         $product->save();
         Toastr::success(translate('Product status updated!'));
         return back();
     }
 
-    public function daily_needs(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function feature(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $product = Product::find($request->id);
+        $product = $this->product->find($request->id);
+        $product->is_featured = $request->is_featured;
+        $product->save();
+        Toastr::success(translate('product feature status updated!'));
+        return back();
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function daily_needs(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $product = $this->product->find($request->id);
         $product->daily_needs = $request->status;
         $product->save();
         return response()->json([], 200);
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return JsonResponse
+     */
+    public function update(Request $request, $id): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|unique:products,name,'.$request->id,
@@ -341,7 +440,22 @@ class ProductController extends Controller
             $validator->getMessageBag()->add('unit_price', 'Discount can not be more or equal to the price!');
         }
 
-        $p = Product::find($id);
+        $tag_ids = [];
+        if ($request->tags != null) {
+            $tags = explode(",", $request->tags);
+        }
+        if(isset($tags)){
+            foreach ($tags as $key => $value) {
+                $tag = $this->tag->firstOrNew(
+                    ['tag' => $value]
+                );
+                $tag->save();
+                $tag_ids[] = $tag->id;
+            }
+        }
+
+        $p = $this->product->find($id);
+
         $images = json_decode($p->image);
         if (!empty($request->file('images'))) {
             foreach ($request->images as $img) {
@@ -422,7 +536,12 @@ class ProductController extends Controller
                 $item['type'] = $str;
                 $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
                 $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
-                array_push($variations, $item);
+
+                if ($request['discount_type'] == 'amount' && $item['price'] <= $request['discount'] ){
+                    $validator->getMessageBag()->add('discount_mismatch', 'Discount can not be more or equal to the price. Please change variant '. $item['type'] .' price or change discount amount!');
+                }
+
+                $variations[] = $item;
                 $stock_count += $item['stock'];
             }
         } else {
@@ -442,6 +561,8 @@ class ProductController extends Controller
         $p->price = $request->price;
         $p->capacity = $request->capacity;
         $p->unit = $request->unit;
+        $p->maximum_order_quantity = $request->maximum_order_quantity;
+
         // $p->image = json_encode(array_merge(json_decode($p['image'], true), json_decode($image_data, true)));
         // $p->set_menu = $request->item_type;
         $p->image = json_encode($images);
@@ -458,15 +579,15 @@ class ProductController extends Controller
         $p->attributes = $request->has('attribute_id') ? json_encode($request->attribute_id) : json_encode([]);
         $p->status = $request->status? $request->status:0;
 
-
         $p->save();
 
+        $p->tags()->sync($tag_ids);
 
         foreach($request->lang as $index=>$key)
         {
             if($request->name[$index] && $key != 'en')
             {
-                Translation::updateOrInsert(
+                $this->translation->updateOrInsert(
                     ['translationable_type'  => 'App\Model\Product',
                         'translationable_id'    => $p->id,
                         'locale'                => $key,
@@ -476,7 +597,7 @@ class ProductController extends Controller
             }
             if($request->description[$index] && $key != 'en')
             {
-                Translation::updateOrInsert(
+                $this->translation->updateOrInsert(
                     ['translationable_type'  => 'App\Model\Product',
                         'translationable_id'    => $p->id,
                         'locale'                => $key,
@@ -489,27 +610,40 @@ class ProductController extends Controller
         return response()->json([], 200);
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $product = Product::find($request->id);
+        $product = $this->product->find($request->id);
         foreach (json_decode($product['image'], true) as $img) {
             if (Storage::disk('public')->exists('product/' . $img)) {
                 Storage::disk('public')->delete('product/' . $img);
             }
         }
 
+        $flash_deal_products = FlashDealProduct::where('product_id', $product->id)->get();
+        foreach ($flash_deal_products as $flash_deal_product) {
+            $flash_deal_product->delete();
+        }
         $product->delete();
         Toastr::success(translate('Product removed!'));
         return back();
     }
 
-    public function remove_image($id, $name)
+    /**
+     * @param $id
+     * @param $name
+     * @return RedirectResponse
+     */
+    public function remove_image($id, $name): \Illuminate\Http\RedirectResponse
     {
         if (Storage::disk('public')->exists('product/' . $name)) {
             Storage::disk('public')->delete('product/' . $name);
         }
 
-        $product = Product::find($id);
+        $product = $this->product->find($id);
         $img_arr = [];
         // if (count(json_decode($product['images'])) < 2) {
         //     Toastr::warning('You cannot delete all images!');
@@ -518,23 +652,30 @@ class ProductController extends Controller
 
         foreach (json_decode($product['image'], true) as $img) {
             if (strcmp($img, $name) != 0) {
-                array_push($img_arr, $img);
+                $img_arr[] = $img;
             }
         }
 
-        Product::where(['id' => $id])->update([
+        $this->product->where(['id' => $id])->update([
             'image' => json_encode($img_arr),
         ]);
         Toastr::success(translate('Image removed successfully!'));
         return back();
     }
 
-    public function bulk_import_index()
+    /**
+     * @return Factory|View|Application
+     */
+    public function bulk_import_index(): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
         return view('admin-views.product.bulk-import');
     }
 
-    public function bulk_import_data(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function bulk_import_data(Request $request): \Illuminate\Http\RedirectResponse
     {
         try {
             $collections = (new FastExcel)->import($request->file('products_file'));
@@ -551,76 +692,12 @@ class ProductController extends Controller
                     return back();
                 }
             }
-
-            /*if ($collection['name'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: name ');
-                return back();
-            } elseif ($collection['description'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: description ');
-                return back();
-            } elseif (!is_numeric($collection['price'])) {
-                Toastr::error('Price of row ' . ($key + 2) . ' must be number');
-                return back();
-            } elseif (!is_numeric($collection['tax'])) {
-                Toastr::error('Tax of row ' . ($key + 2) . ' must be number');
-                return back();
-            } elseif ($collection['price'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: price ');
-                return back();
-            } elseif ($collection['category_id'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: category_id ');
-                return back();
-            } elseif ($collection['sub_category_id'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: sub_category_id ');
-                return back();
-            } elseif (!is_numeric($collection['discount'])) {
-                Toastr::error('Discount of row ' . ($key + 2) . ' must be number');
-                return back();
-            } elseif ($collection['discount'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: discount ');
-                return back();
-            } elseif ($collection['discount_type'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: discount_type ');
-                return back();
-            } elseif ($collection['tax_type'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: tax_type ');
-                return back();
-            } elseif ($collection['unit'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: unit ');
-                return back();
-            } elseif (!is_numeric($collection['total_stock'])) {
-                Toastr::error('Total Stock of row ' . ($key + 2) . ' must be number');
-                return back();
-            } elseif ($collection['total_stock'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: total_stock ');
-                return back();
-            } elseif (!is_numeric($collection['capacity'])) {
-                Toastr::error('Capacity of row ' . ($key + 2) . ' must be number');
-                return back();
-            } elseif ($collection['capacity'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: capacity ');
-                return back();
-            } elseif (!is_numeric($collection['daily_needs'])) {
-                Toastr::error('Daily Needs of row ' . ($key + 2) . ' must be number');
-                return back();
-            } elseif ($collection['daily_needs'] === "") {
-                Toastr::error('Please fill row:' . ($key + 2) . ' field: daily_needs ');
-                return back();
-            }
-
-            $product = [
-                'discount_type' => $collection['discount_type'],
-                'discount' => $collection['discount'],
-            ];
-            if ($collection['price'] <= Helpers::discount_calculate($product, $collection['price'])) {
-                Toastr::error('Discount can not be more or equal to the price in row '. ($key + 2));
-                return back();
-            }*/
         }
+
         $data = [];
         foreach ($collections as $collection) {
 
-            array_push($data, [
+            $data[] = [
                 'name' => $collection['name'],
                 'description' => $collection['description'],
                 'image' => json_encode(['def.png']),
@@ -640,29 +717,41 @@ class ProductController extends Controller
                 'daily_needs' => $collection['daily_needs'],
                 'created_at' => now(),
                 'updated_at' => now()
-            ]);
+            ];
         }
         DB::table('products')->insert($data);
         Toastr::success(count($data) . (translate(' - Products imported successfully!')));
         return back();
     }
 
-    public function bulk_export_index()
+    /**
+     * @return Factory|View|Application
+     */
+    public function bulk_export_index(): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
         return view('admin-views.product.bulk-export-index');
     }
 
-    public function bulk_export_data(Request $request)
+    /**
+     * @param Request $request
+     * @return StreamedResponse|string
+     * @throws IOException
+     * @throws InvalidArgumentException
+     * @throws UnsupportedTypeException
+     * @throws WriterNotOpenedException
+     */
+    public function bulk_export_data(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse|string
     {
         $start_date = $request->type == 'date_wise' ? $request['start_date'] : null;
         $end_date = $request->type == 'date_wise' ? $request['end_date'] : null;
 
         //dd($start_date, $end_date);
 
-        $products = Product::when((!is_null($start_date) && !is_null($end_date)), function ($query) use ($start_date, $end_date) {
-                    return $query->whereDate('created_at', '>=', $start_date)
-                        ->whereDate('created_at', '<=', $end_date);
-                })->get();
+        $products = $this->product->when((!is_null($start_date) && !is_null($end_date)), function ($query) use ($start_date, $end_date) {
+            return $query->whereDate('created_at', '>=', $start_date)
+                ->whereDate('created_at', '<=', $end_date);
+            })
+            ->get();
 
         $storage = [];
         foreach($products as $item){
@@ -709,14 +798,18 @@ class ProductController extends Controller
         return (new FastExcel($storage))->download('products.xlsx');
     }
 
-    public function limited_stock(Request $request)
+    /**
+     * @param Request $request
+     * @return Factory|View|Application
+     */
+    public function limited_stock(Request $request): \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Contracts\Foundation\Application
     {
-        $stock_limit = BusinessSetting::where('key','minimum_stock_limit')->first()->value;
+        $stock_limit = $this->business_setting->where('key','minimum_stock_limit')->first()->value;
         $query_param = [];
         $search = $request['search'];
         if ($request->has('search')) {
             $key = explode(' ', $request['search']);
-            $query = Product::where(function ($q) use ($key) {
+            $query = $this->product->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('name', 'like', "%{$value}%");
@@ -724,7 +817,7 @@ class ProductController extends Controller
             })->where('total_stock', '<', $stock_limit)->latest();
             $query_param = ['search' => $request['search']];
         }else{
-            $query = Product::where('total_stock', '<', $stock_limit)->latest();
+            $query = $this->product->where('total_stock', '<', $stock_limit)->latest();
         }
 
         $products = $query->paginate(Helpers::getPagination())->appends($query_param);
@@ -732,17 +825,24 @@ class ProductController extends Controller
         return view('admin-views.product.limited-stock', compact('products', 'search', 'stock_limit'));
     }
 
-    public function get_variations(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function get_variations(Request $request): \Illuminate\Http\JsonResponse
     {
-        $product = Product::find($request['id']);
+        $product = $this->product->find($request['id']);
         return response()->json([
             'view' => view('admin-views.product.partials._update_stock', compact('product'))->render()
         ]);
     }
 
-    public function update_quantity(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function update_quantity(Request $request): \Illuminate\Http\RedirectResponse
     {
-        //dd($request->all());
         $variations = [];
         $stock_count = $request['total_stock'];
         $product_price = $request['product_price'];
@@ -750,24 +850,23 @@ class ProductController extends Controller
             foreach ($request['type'] as $key => $str) {
                 $item = [];
                 $item['type'] = $str;
-                //$item['price'] = BackEndHelper::currency_to_usd(abs($request['price_' . str_replace('.', '_', $str)]));
                 $item['price'] = (abs($request['price_' . str_replace('.', '_', $str)]));
                 $item['stock'] = abs($request['qty_' . str_replace('.', '_', $str)]);
-                array_push($variations, $item);
+                $variations[] = $item;
             }
         }
 
-        $product = Product::find($request['product_id']);
+        $product = $this->product->find($request['product_id']);
+
         if ($stock_count >= 0) {
             $product->total_stock = $stock_count;
             $product->variations = json_encode($variations);
             $product->save();
             Toastr::success(translate('product_quantity_updated_successfully!'));
-            return back();
         } else {
             Toastr::warning(translate('product_quantity_can_not_be_less_than_0_!'));
-            return back();
         }
+        return back();
     }
 
 }

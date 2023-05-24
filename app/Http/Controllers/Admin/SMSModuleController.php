@@ -5,17 +5,29 @@ namespace App\Http\Controllers\Admin;
 use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
 use App\Model\BusinessSetting;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SMSModuleController extends Controller
 {
-    public function sms_index()
+    /**
+     * @return Application|Factory|View
+     */
+    public function sms_index(): View|Factory|Application
     {
         return view('admin-views.business-settings.sms-index');
     }
 
-    public function sms_update(Request $request, $module)
+    /**
+     * @param Request $request
+     * @param $module
+     * @return RedirectResponse
+     */
+    public function sms_update(Request $request, $module): \Illuminate\Http\RedirectResponse
     {
         if ($module == 'twilio_sms') {
             DB::table('business_settings')->updateOrInsert(['key' => 'twilio_sms'], [

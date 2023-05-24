@@ -21,34 +21,35 @@ class Order extends Model
         'created_at'             => 'datetime',
         'updated_at'             => 'datetime',
         'delivery_address'       => 'array',
-        'delivery_date'       => 'date'
+        'delivery_date'          => 'date',
+        'free_delivery_amount'   => 'float',
     ];
 
-    public function details()
+    public function details(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(OrderDetail::class);
     }
 
-    public function delivery_man()
+    public function delivery_man(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(DeliveryMan::class, 'delivery_man_id');
     }
-    public function time_slot()
+    public function time_slot(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(TimeSlot::class, 'time_slot_id');
     }
 
-    public function customer()
+    public function customer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function branch()
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
 
-    public function delivery_address()
+    public function delivery_address(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(CustomerAddress::class, 'delivery_address_id');
     }
@@ -61,6 +62,11 @@ class Order extends Model
     public function scopeNotPos($query)
     {
         return $query->where('order_type', '!=' , 'pos');
+    }
+
+    public function coupon(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Coupon::class, 'coupon_code', 'code');
     }
 
 }

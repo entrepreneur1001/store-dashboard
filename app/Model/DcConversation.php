@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class DcConversation extends Model
 {
-    public function messages(){
+    public function messages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
         return $this->hasMany(Message::class,'conversation_id');
     }
 }

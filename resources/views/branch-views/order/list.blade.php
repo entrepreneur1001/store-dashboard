@@ -12,13 +12,16 @@
         <!-- Page Header Start -->
         <div class="page-header">
             <h1 class="mb-0 page-header-title">
+                <span class="page-header-icon">
+                    <img src="{{asset('public/assets/admin/img/all_orders.png')}}" class="w--20" alt="">
+                </span>
                 <span class="">
                     @if($status =='processing')
-                        {{ ucwords(str_replace('_',' ','Packaging' )) }} {{translate('Orders')}}
+                        {{ translate(ucwords('Packaging')) }} {{translate('Orders')}}
                     @elseif($status =='failed')
-                        {{ ucwords(str_replace('_',' ','Failed to Deliver' )) }} {{translate('Orders')}}
+                        {{ translate(ucwords(str_replace('_',' ','Failed to Deliver' ))) }} {{translate('Orders')}}
                     @else
-                        {{ ucwords(str_replace('_',' ',$status )) }} {{translate('Orders')}}
+                        {{ translate(ucwords(str_replace('_',' ',$status ))) }} {{translate('Orders')}}
                     @endif
                     <span class="badge badge-pill badge-soft-secondary ml-2">{{ $orders->total() }}</span>
                 </span>
@@ -30,12 +33,12 @@
 
         <div class="card">
             <div class="card-header shadow flex-wrap p-20px border-0">
-                <h5 class="form-bold w-100 mb-3">Select Date Range</h5>
+                <h5 class="form-bold w-100 mb-3">{{ translate('Select Date Range') }}</h5>
                 <form class="w-100">
                     <div class="row g-3 g-sm-4 g-md-3 g-lg-4">
                         <div class="col-sm-6 col-md-3">
                             <div class="input-date-group">
-                                <label class="input-label" for="start_date">Start Date</label>
+                                <label class="input-label" for="start_date">{{ translate('Start Date') }}</label>
                                 <label class="input-date">
                                     <input type="text" id="start_date" name="start_date" value="{{$start_date}}" class="js-flatpickr form-control flatpickr-custom min-h-45px" placeholder="yy-mm-dd" data-hs-flatpickr-options='{ "dateFormat": "Y-m-d"}'>
                                 </label>
@@ -43,7 +46,7 @@
                         </div>
                         <div class="col-sm-6 col-md-3">
                             <div class="input-date-group">
-                                <label class="input-label" for="end_date">End Date</label>
+                                <label class="input-label" for="end_date">{{ translate('End Date') }}</label>
                                 <label class="input-date">
                                     <input type="text" id="end_date" name="end_date" value="{{$end_date}}" class="js-flatpickr form-control flatpickr-custom min-h-45px" placeholder="yy-mm-dd" data-hs-flatpickr-options='{ "dateFormat": "Y-m-d"}'>
                                 </label>
@@ -317,7 +320,7 @@
                                             </span>
                                         @else
                                             <span class="badge badge-soft-danger ml-2 ml-sm-3">
-                                                {{str_replace('_',' ',$order['order_status'])}}
+                                                {{ translate(str_replace('_',' ',$order['order_status'])) }}
                                             </span>
                                         @endif
                                     </div>

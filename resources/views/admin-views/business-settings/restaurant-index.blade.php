@@ -574,6 +574,51 @@
                                             required>
                                     </div>
                                 </div>
+                                @php($time_format=\App\CentralLogics\Helpers::get_business_settings('time_format') ?? '24')
+                                <div class="col-md-4 col-12">
+                                    <div class="form-group">
+                                        <label class="input-label text-capitalize">{{translate('time_format')}}</label>
+                                        <select name="time_format" class="form-control">
+                                            <option value="12" {{$time_format=='12'?'selected':''}}>{{translate('12_hour')}}</option>
+                                            <option value="24" {{$time_format=='24'?'selected':''}}>{{translate('24_hour')}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4" style="padding-top: 30px;">
+                                    <?php
+                                    $max_amount_status=\App\CentralLogics\Helpers::get_business_settings('maximum_amount_for_cod_order_status');
+                                    $max_status = $max_amount_status == 1 ? 0 : 1;
+                                    ?>
+                                    <div class="form-group">
+                                        <label class="toggle-switch h--45px toggle-switch-sm d-flex justify-content-between border rounded px-3 py-0 form-control"
+                                               onclick="max_amount_status('{{route('admin.business-settings.store.max-amount-status',[$max_status])}}')">
+                                            <span class="pr-1 d-flex align-items-center switch--label">
+                                                <span class="line--limit-1">
+                                                    <strong>{{translate('Maximum Amount for COD Order Status')}}</strong>
+                                                </span>
+                                                <span class="form-label-secondary text-danger d-flex ml-1" data-toggle="tooltip" data-placement="right" data-original-title="{{translate('If this field is active the maximum amount for Cash on Delivery order is apply')}}"><img src="{{asset('public/assets/admin/img/info-circle.svg')}}" alt="info">
+                                                </span>
+                                            </span>
+                                            <input type="checkbox" class="toggle-switch-input" name="phone_verification" {{ $max_amount_status == 1 ? 'checked' : '' }}>
+                                            <span class="toggle-switch-label text">
+                                                <span class="toggle-switch-indicator"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                @php($maximum_amount_for_cod_order=\App\CentralLogics\Helpers::get_business_settings('maximum_amount_for_cod_order'))
+                                <div class="col-md-4 col-sm-6">
+                                    <div class="form-group mb-0">
+                                        <label class="input-label text-capitalize">{{translate('Maximum Amount for COD Order')}}
+                                            <i class="tio-info-outined"
+                                               data-toggle="tooltip"
+                                               data-placement="top"
+                                               title="{{ translate('The maximum amount for Cash on Delivery order.') }}"></i>
+                                        </label>
+                                        <input type="number" value="{{$maximum_amount_for_cod_order}}" name="maximum_amount_for_cod_order" class="form-control" placeholder=""
+                                               {{ $max_amount_status == 0 ? 'readonly' : '' }} required>
+                                    </div>
+                                </div>
                                 <div class="col-md-4">
                                     <?php
                                         $sp=\App\Model\BusinessSetting::where('key','self_pickup')->first()->value;
@@ -628,9 +673,9 @@
                                         <label class="toggle-switch h--45px toggle-switch-sm d-flex justify-content-between border rounded px-3 py-0 form-control"
                                                onclick="phone_verification('{{route('admin.business-settings.store.phone-verification',[$status])}}')">
                                             <span class="pr-1 d-flex align-items-center switch--label">
-                                            <span class="line--limit-1">
-                                                <strong>{{translate('phone')}} {{translate('verification')}}</strong>
-                                            </span>
+                                                <span class="line--limit-1">
+                                                    <strong>{{translate('phone')}} {{translate('verification')}}</strong>
+                                                </span>
                                                 <span class="form-label-secondary text-danger d-flex ml-1" data-toggle="tooltip" data-placement="right" data-original-title="{{translate('If this field is active, customer have to verify their phone number through an OTP')}}"><img src="{{asset('public/assets/admin/img/info-circle.svg')}}" alt="info">
                                                 </span>
                                             </span>
@@ -641,36 +686,70 @@
                                         </label>
                                     </div>
                                 </div>
-                                @php($time_format=\App\CentralLogics\Helpers::get_business_settings('time_format') ?? '24')
-                                <div class="col-md-4 col-12">
+                                <div class="col-md-4">
+                                    <?php
+                                    $dm_self_registration=\App\Model\BusinessSetting::where('key','dm_self_registration')->first()->value;
+                                    $dm_status = $dm_self_registration == 1 ? 0 : 1;
+                                    ?>
                                     <div class="form-group">
-                                        <label class="input-label text-capitalize">{{translate('time_format')}}</label>
-                                        <select name="time_format" class="form-control">
-                                            <option value="12" {{$time_format=='12'?'selected':''}}>{{translate('12_hour')}}</option>
-                                            <option value="24" {{$time_format=='24'?'selected':''}}>{{translate('24_hour')}}</option>
-                                        </select>
+                                        <label class="toggle-switch h--45px toggle-switch-sm d-flex justify-content-between border rounded px-3 py-0 form-control"
+                                               onclick="dm_self_registration('{{route('admin.business-settings.store.dm-self-registration',[$dm_status])}}')">
+                                            <span class="pr-1 d-flex align-items-center switch--label">
+                                            <span class="line--limit-1">
+                                                <strong>{{translate('Deliverman_self_registration')}}</strong>
+                                            </span>
+                                                <span class="form-label-secondary text-danger d-flex ml-1" data-toggle="tooltip" data-placement="right"
+                                                      data-original-title="{{translate('When this field is active, delivery men can register themself using the delivery man app.')}}">
+                                                    <img src="{{asset('public/assets/admin/img/info-circle.svg')}}" alt="info">
+                                                </span>
+                                            </span>
+                                            <input type="checkbox" name="dm_self_registration" class="toggle-switch-input" {{ $dm_self_registration == 1 ? 'checked' : '' }}>
+                                            <span class="toggle-switch-label text">
+                                                <span class="toggle-switch-indicator"></span>
+                                            </span>
+                                        </label>
                                     </div>
-
                                 </div>
-
-                            </div>
-                            @php($logo=\App\Model\BusinessSetting::where('key','logo')->first()->value)
-                            <div class="form-group mt-2">
-                                <label>{{translate('logo')}}</label><small>( {{translate('ratio')}} 3:1 )</small>
-                                <div class="custom-file">
-                                    <input type="file" name="logo" id="customFileEg1" class="custom-file-input"
-                                           accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*">
-                                    <label class="custom-file-label"
-                                           for="customFileEg1">{{translate('choose')}} {{translate('file')}}</label>
-                                </div>
-                                <center>
-                                    <img id="viewer" class="mt-4 border rounded mw-100 p-2"
-                                         onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'"
-                                         src="{{asset('storage/app/public/restaurant/'.$logo)}}" alt="logo image"/>
-                                </center>
                             </div>
 
-                            <div class="btn--container justify-content-end">
+                            <div class="row">
+                                @php($logo=\App\Model\BusinessSetting::where('key','logo')->first()->value)
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="form-group mb-0">
+                                        <label>{{translate('logo')}}</label><small class="text-danger"> ( {{translate('ratio')}} 3:1 )</small>
+                                        <div class="custom-file">
+                                            <input type="file" name="logo" id="customFileEg1" class="custom-file-input"
+                                                   accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*">
+                                            <label class="custom-file-label"
+                                                   for="customFileEg1">{{translate('choose')}} {{translate('file')}}</label>
+                                        </div>
+                                        <center>
+                                            <img id="viewer" class="mt-4 border rounded mw-100 p-2"
+                                                 onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'"
+                                                 src="{{asset('storage/app/public/restaurant/'.$logo)}}" alt="logo image"/>
+                                        </center>
+                                    </div>
+                                </div>
+                                @php($fav_icon=\App\Model\BusinessSetting::where('key','fav_icon')->first()->value)
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="form-group mb-0">
+                                        <label>{{translate('Fav Icon')}}</label><small class="text-danger"> ( {{translate('ratio')}} 1:1 )</small>
+                                        <div class="custom-file">
+                                            <input type="file" name="fav_icon" id="customFileEg2" class="custom-file-input"
+                                                   accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*">
+                                            <label class="custom-file-label"
+                                                   for="customFileEg2">{{translate('choose')}} {{translate('file')}}</label>
+                                        </div>
+                                        <center>
+                                            <img id="viewer_2" class="mt-4 border rounded p-2 aspect-1 mw-145 object-cover"
+                                                 onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'"
+                                                 src="{{asset('storage/app/public/restaurant/'.$fav_icon)}}" alt="logo image"/>
+                                        </center>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="btn--container justify-content-end mt-5">
                                 <button type="reset" class="btn btn--reset">{{translate('reset')}}</button>
                                 <button type="{{env('APP_MODE')!='demo'?'submit':'button'}}"
                                     onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}"
@@ -680,15 +759,6 @@
                         </form>
                     </div>
                 </div>
-            </div>
-            <div class="tab-pane fade" id="main-branch">
-                <!-- Main Branch Data -->
-            </div>
-            <div class="tab-pane fade" id="time-slot">
-                <!-- time slot -->
-            </div>
-            <div class="tab-pane" id="delivery-fee">
-
             </div>
         </div>
 
@@ -707,21 +777,23 @@
         let language = <?php echo($language); ?>;
         $('[id=language]').val(language);
 
-        function readURL(input) {
+        function readURL(input, viewer) {
             if (input.files && input.files[0]) {
                 var reader = new FileReader();
-
-                reader.onload = function (e) {
-                    $('#viewer').attr('src', e.target.result);
+                reader.onload = function(e) {
+                    $('#' + viewer).attr('src', e.target.result);
                 }
-
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
         $("#customFileEg1").change(function () {
-            readURL(this);
+            readURL(this, 'viewer');
         });
+        $("#customFileEg2").change(function() {
+            readURL(this, 'viewer_2');
+        });
+
         $("#language").on("change", function () {
             $("#alert_box").css("display", "block");
         });
@@ -802,6 +874,24 @@
             });
         }
 
+        function dm_self_registration(route) {
+
+            $.get({
+                url: route,
+                contentType: false,
+                processData: false,
+                beforeSend: function () {
+                    $('#loading').show();
+                },
+                success: function (data) {
+                    toastr.success(data.message);
+                },
+                complete: function () {
+                    $('#loading').hide();
+                },
+            });
+        }
+
         function phone_verification(route) {
 
             $.get({
@@ -847,6 +937,32 @@
                     }else{
                         toastr.warning(data.message);
                     }
+                },
+                complete: function () {
+                    $('#loading').hide();
+                },
+            });
+        }
+
+        function max_amount_status(route) {
+
+            $.get({
+                url: route,
+                contentType: false,
+                processData: false,
+                beforeSend: function () {
+                    $('#loading').show();
+                },
+                success: function (data) {
+                    setTimeout(function () {
+                        location.reload(true);
+                    }, 1000);
+                    if(data.status == 1){
+                        toastr.success(data.message);
+                    }else{
+                        toastr.warning(data.message);
+                    }
+
                 },
                 complete: function () {
                     $('#loading').hide();

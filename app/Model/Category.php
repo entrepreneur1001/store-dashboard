@@ -13,7 +13,7 @@ class Category extends Model
         'status' => 'integer'
     ];
 
-    public function translations()
+    public function translations(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany('App\Model\Translation', 'translationable');
     }
@@ -23,12 +23,12 @@ class Category extends Model
         return $query->where('status', '=', 1);
     }
 
-    public function childes()
+    public function childes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
 
-    public function parent()
+    public function parent(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
@@ -41,7 +41,7 @@ class Category extends Model
         return $this->translations[0]->value ?? $name;
     }
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::addGlobalScope('translate', function (Builder $builder) {
             $builder->with(['translations' => function($query){

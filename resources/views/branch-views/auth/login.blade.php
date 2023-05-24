@@ -48,9 +48,9 @@
                             <div class="auth-wrapper-right-logo">
                                 <img onerror="this.src='{{asset('public/assets/admin/img/160x160/img2.jpg')}}'" src="{{asset('storage/app/public/restaurant')}}/{{\App\Model\BusinessSetting::where(['key'=>'logo'])->first()->value}}" alt="public/img">
                             </div>
-                            <h2 class="title">{{translate('sign in')}}</h2>
-                            <div>{{translate('welcome_back')}}</div>
-                            <p class="mb-0">{{translate('Want to login your admin account ')}}?
+                            <h2 class="title">{{ translate('sign in')}}</h2>
+                            <div>{{ translate('welcome back') }}</div>
+                            <p class="mb-0">{{ translate('Want to login your admin account') }}?
                                 <a href="{{route('admin.auth.login')}}">
                                     {{ translate('Admin Login') }}
                                 </a>

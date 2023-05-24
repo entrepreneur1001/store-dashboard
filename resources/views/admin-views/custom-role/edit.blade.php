@@ -35,21 +35,13 @@
                     </div>
                 </div>
 
-<!--                <div class="d-flex">
-                    <h5 class="input-label m-0 text-capitalize">{{translate('module_permission')}} : </h5>
-                    <div class="check-item pb-0 w-auto">
-                        <div class="form-group form-check form&#45;&#45;check m-0 ml-2">
-                            <input type="checkbox" name="modules[]" value="account" class="form-check-input"
-                                    id="select-all">
-                            <label class="form-check-label ml-2" for="select-all">{{ translate('Select All') }}</label>
-                        </div>
-                    </div>
-                </div>-->
 
                 <div class="d-flex">
                     <h5 class="input-label m-0 text-capitalize">{{translate('module_permission')}} : </h5>
                     <div class="check-item pb-0 w-auto">
-                        <input type="checkbox" id="select_all">
+                        <input type="checkbox" id="select_all"
+{{--                            {{ count(MANAGEMENT_SECTION) ==  count(json_decode($role['module_access'])) ?'checked':''}}--}}
+                        >
                         <label class="title-color mb-0 pl-2" for="select_all">{{ translate('select_all')}}</label>
                     </div>
                 </div>
@@ -98,21 +90,31 @@
 
 
 <script>
-    /*$('#select-all').on('change', function(){
-        if(this.checked === true) {
-            $('.check--item-wrapper .check-item .form-check-input').attr('checked', true)
-        } else {
-            $('.check--item-wrapper .check-item .form-check-input').attr('checked', false)
-        }
-    })*/
-    $("#select_all").on('change', function (){
-        if($("#select_all").is(":checked") === true){
-            //console.log($("#select_all").is(":checked"));
-            $(".module-permission").prop("checked", true);
-        }else{
-            $(".module-permission").removeAttr("checked");
+    $(document).ready(function() {
+        // Check or uncheck "Select All" based on other checkboxes
+        $(".module-permission").on('change', function (){
+            if ($(".module-permission:checked").length == $(".module-permission").length) {
+                $("#select_all").prop("checked", true);
+            } else {
+                $("#select_all").prop("checked", false);
+            }
+        });
+
+        // Check or uncheck all checkboxes based on "Select All" checkbox
+        $("#select_all").on('change', function (){
+            if ($("#select_all").is(":checked")) {
+                $(".module-permission").prop("checked", true);
+            } else {
+                $(".module-permission").prop("checked", false);
+            }
+        });
+
+        // Check "Select All" checkbox on page load if all checkboxes are checked
+        if ($(".module-permission:checked").length == $(".module-permission").length) {
+            $("#select_all").prop("checked", true);
         }
     });
 </script>
+
 
 @endpush

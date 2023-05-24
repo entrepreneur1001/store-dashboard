@@ -15,7 +15,7 @@ class PaymentController extends Controller
         }
 
         $params = explode('&&', base64_decode($request['token']));
-        
+
         foreach ($params as $param) {
             $data = explode('=', $param);
             if ($data[0] == 'customer_id') {
@@ -39,7 +39,7 @@ class PaymentController extends Controller
                 'phone' => $customer['phone'],
             ];
             session()->put('data', $data);
-            return view('payment-view');
+            return view('payment-view', ['payment_method' => $request['payment_method']]);
         }
 
         if (!isset($customer))

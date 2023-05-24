@@ -10,16 +10,33 @@ use App\Model\BusinessSetting;
 use App\Model\EmailVerifications;
 use App\Model\PhoneVerification;
 use App\User;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
+use Illuminate\Support\Carbon;
+use Carbon\CarbonInterval;
 
 class CustomerAuthController extends Controller
 {
-    public function check_phone(Request $request)
+    public function __construct(
+        private BusinessSetting $business_setting,
+        private EmailVerifications $email_verification,
+        private PhoneVerification $phone_verification,
+        private User $user
+    )
+    {}
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function check_phone(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required|min:11|max:14|unique:users'
@@ -29,14 +46,37 @@ class CustomerAuthController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        if (BusinessSetting::where(['key' => 'phone_verification'])->first()->value) {
-            $token = rand(1000, 9999);
-            DB::table('phone_verifications')->insert([
+        if ($this->business_setting->where(['key' => 'phone_verification'])->first()->value) {
+
+            $otp_interval_time= Helpers::get_business_settings('otp_resend_time') ?? 60;// seconds
+            $otp_verification_data= DB::table('phone_verifications')->where('phone', $request['phone'])->first();
+
+            if(isset($otp_verification_data) &&  Carbon::parse($otp_verification_data->created_at)->DiffInSeconds() < $otp_interval_time){
+                $time= $otp_interval_time - Carbon::parse($otp_verification_data->created_at)->DiffInSeconds();
+
+                $errors = [];
+                $errors[] = [
+                    'code' => 'otp',
+                    'message' => translate('please_try_again_after_') . $time . ' ' . translate('seconds')
+                ];
+                return response()->json([
+                    'errors' => $errors
+                ], 403);
+            }
+
+            if(env('APP_MODE')=='live'){
+                $token = rand(1000, 9999);
+            }else{
+                $token = 1234;
+            }
+
+            DB::table('phone_verifications')->updateOrInsert(['phone' => $request['phone']], [
                 'phone' => $request['phone'],
                 'token' => $token,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
             $response = SMS_module::send($request['phone'], $token);
             return response()->json([
                 'message' => $response,
@@ -50,7 +90,109 @@ class CustomerAuthController extends Controller
         }
     }
 
-    public function check_email(Request $request)
+    public function verify_phone(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => Helpers::error_processor($validator)], 403);
+        }
+
+        $max_otp_hit = Helpers::get_business_settings('maximum_otp_hit') ?? 5;
+        $max_otp_hit_time = Helpers::get_business_settings('otp_resend_time') ?? 60;// seconds
+        $temp_block_time = Helpers::get_business_settings('temporary_block_time') ?? 600; // seconds
+
+        $verify = $this->phone_verification->where(['phone' => $request['phone'], 'token' => $request['token']])->first();
+
+        if (isset($verify)) {
+            if(isset($verify->temp_block_time ) && Carbon::parse($verify->temp_block_time)->DiffInSeconds() <= $temp_block_time){
+                $time = $temp_block_time - Carbon::parse($verify->temp_block_time)->DiffInSeconds();
+
+                $errors = [];
+                $errors[] = ['code' => 'otp_block_time',
+                    'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                ];
+                return response()->json([
+                    'errors' => $errors
+                ], 403);
+            }
+
+            $verify->delete();
+            return response()->json([
+                'message' => 'OTP verified!',
+            ], 200);
+
+        }
+        else{
+            $verification_data= DB::table('phone_verifications')->where('phone', $request['phone'])->first();
+
+            if(isset($verification_data)){
+                if(isset($verification_data->temp_block_time ) && Carbon::parse($verification_data->temp_block_time)->DiffInSeconds() <= $temp_block_time){
+                    $time= $temp_block_time - Carbon::parse($verification_data->temp_block_time)->DiffInSeconds();
+
+                    $errors = [];
+                    $errors[] = ['code' => 'otp_block_time',
+                        'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                    ];
+                    return response()->json([
+                        'errors' => $errors
+                    ], 403);
+                }
+
+                if($verification_data->is_temp_blocked == 1 && Carbon::parse($verification_data->updated_at)->DiffInSeconds() >= $max_otp_hit_time){
+                    DB::table('phone_verifications')->updateOrInsert(['phone' => $request['phone']],
+                        [
+                            'otp_hit_count' => 0,
+                            'is_temp_blocked' => 0,
+                            'temp_block_time' => null,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+
+                if($verification_data->otp_hit_count >= $max_otp_hit &&  Carbon::parse($verification_data->updated_at)->DiffInSeconds() < $max_otp_hit_time &&  $verification_data->is_temp_blocked == 0){
+
+                    DB::table('phone_verifications')->updateOrInsert(['phone' => $request['phone']],
+                        [
+                            'is_temp_blocked' => 1,
+                            'temp_block_time' => now(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                    $time= $temp_block_time - Carbon::parse($verification_data->temp_block_time)->DiffInSeconds();
+                    $errors = [];
+                    $errors[] = [
+                        'code' => 'otp_temp_blocked',
+                        'message' => translate('Too_many_attempts. please_try_again_after_'). CarbonInterval::seconds($time)->cascade()->forHumans()
+                    ];
+                    return response()->json([
+                        'errors' => $errors
+                    ], 403);
+                }
+
+            }
+
+            DB::table('phone_verifications')->updateOrInsert(['phone' => $request['phone']],
+                [
+                    'otp_hit_count' => DB::raw('otp_hit_count + 1'),
+                    'updated_at' => now(),
+                    'temp_block_time' => null,
+                ]);
+        }
+
+        return response()->json(['errors' => [
+            ['code' => 'token', 'message' => 'OTP is not matched!']
+        ]], 404);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function check_email(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|unique:users'
@@ -60,9 +202,31 @@ class CustomerAuthController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        if (BusinessSetting::where(['key' => 'email_verification'])->first()->value) {
-            $token = rand(1000, 9999);
-            DB::table('email_verifications')->insert([
+        if ($this->business_setting->where(['key' => 'email_verification'])->first()->value) {
+
+            $otp_interval_time= Helpers::get_business_settings('otp_resend_time') ?? 60;// seconds
+            $otp_verification_data= DB::table('email_verifications')->where('email', $request['email'])->first();
+
+            if(isset($otp_verification_data) &&  Carbon::parse($otp_verification_data->created_at)->DiffInSeconds() < $otp_interval_time){
+                $time= $otp_interval_time - Carbon::parse($otp_verification_data->created_at)->DiffInSeconds();
+
+                $errors = [];
+                $errors[] = [
+                    'code' => 'otp',
+                    'message' => translate('please_try_again_after_') . $time . ' ' . translate('seconds')
+                ];
+                return response()->json([
+                    'errors' => $errors
+                ], 403);
+            }
+
+            if(env('APP_MODE')=='live'){
+                $token = rand(1000, 9999);
+            }else{
+                $token = 1234;
+            }
+
+            DB::table('email_verifications')->updateOrInsert(['email' => $request['email']], [
                 'email' => $request['email'],
                 'token' => $token,
                 'created_at' => now(),
@@ -93,7 +257,11 @@ class CustomerAuthController extends Controller
         }
     }
 
-    public function verify_email(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function verify_email(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required'
@@ -103,45 +271,100 @@ class CustomerAuthController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
+        $max_otp_hit = Helpers::get_business_settings('maximum_otp_hit') ?? 5;
+        $max_otp_hit_time = Helpers::get_business_settings('otp_resend_time') ?? 60;// seconds
+        $temp_block_time = Helpers::get_business_settings('temporary_block_time') ?? 600; // seconds
+
         $verify = EmailVerifications::where(['email' => $request['email'], 'token' => $request['token']])->first();
 
         if (isset($verify)) {
+            if(isset($verify->temp_block_time ) && Carbon::parse($verify->temp_block_time)->DiffInSeconds() <= $temp_block_time){
+                $time = $temp_block_time - Carbon::parse($verify->temp_block_time)->DiffInSeconds();
+
+                $errors = [];
+                $errors[] = ['code' => 'otp_block_time',
+                    'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                ];
+                return response()->json([
+                    'errors' => $errors
+                ], 403);
+            }
+
             $verify->delete();
             return response()->json([
                 'message' => 'OTP verified!',
             ], 200);
+
+        } else{
+            $verification_data= DB::table('email_verifications')->where('email', $request['email'])->first();
+
+            if(isset($verification_data)){
+                if(isset($verification_data->temp_block_time ) && Carbon::parse($verification_data->temp_block_time)->DiffInSeconds() <= $temp_block_time){
+                    $time= $temp_block_time - Carbon::parse($verification_data->temp_block_time)->DiffInSeconds();
+
+                    $errors = [];
+                    $errors[] = ['code' => 'otp_block_time',
+                        'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                    ];
+                    return response()->json([
+                        'errors' => $errors
+                    ], 403);
+                }
+
+                if($verification_data->is_temp_blocked == 1 && Carbon::parse($verification_data->updated_at)->DiffInSeconds() >= $max_otp_hit_time){
+                    DB::table('email_verifications')->updateOrInsert(['email' => $request['email']],
+                        [
+                            'otp_hit_count' => 0,
+                            'is_temp_blocked' => 0,
+                            'temp_block_time' => null,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+
+                if($verification_data->otp_hit_count >= $max_otp_hit &&  Carbon::parse($verification_data->updated_at)->DiffInSeconds() < $max_otp_hit_time &&  $verification_data->is_temp_blocked == 0){
+
+                    DB::table('email_verifications')->updateOrInsert(['email' => $request['email']],
+                        [
+                            'is_temp_blocked' => 1,
+                            'temp_block_time' => now(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                    $time= $temp_block_time - Carbon::parse($verification_data->temp_block_time)->DiffInSeconds();
+                    $errors = [];
+                    $errors[] = ['code' => 'otp_temp_blocked', 'message' => translate('Too_many_attempts. please_try_again_after_'). CarbonInterval::seconds($time)->cascade()->forHumans()];
+                    return response()->json([
+                        'errors' => $errors
+                    ], 403);
+                }
+            }
+
+            DB::table('email_verifications')->updateOrInsert(['email' => $request['email']],
+                [
+                    'otp_hit_count' => DB::raw('otp_hit_count + 1'),
+                    'updated_at' => now(),
+                    'temp_block_time' => null,
+                ]);
         }
 
         return response()->json(['errors' => [
-            ['code' => 'otp', 'message' => 'OTP is not found!']
+            ['code' => 'otp', 'message' => 'OTP is not matched!']
         ]], 404);
     }
 
-    public function verify_phone(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required'
-        ]);
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => Helpers::error_processor($validator)], 403);
-        }
 
-        $verify = PhoneVerification::where(['phone' => $request['phone'], 'token' => $request['token']])->first();
-
-        if (isset($verify)) {
-            $verify->delete();
-            return response()->json([
-                'message' => 'OTP verified!',
-            ], 200);
-        }
-
-        return response()->json(['errors' => [
-            ['code' => 'token', 'message' => 'OTP is not found!']
-        ]], 404);
-    }
-
-    public function registration(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function registration(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'f_name' => 'required',
@@ -157,14 +380,33 @@ class CustomerAuthController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
+
+        if ($request->email){
+            $user = $this->user->where(['email' => $request->email])->first();
+            if ($user){
+                $errors = [];
+                $errors[] = ['code' => 'auth-001', 'message' => 'The email has already been taken.'];
+                return response()->json([
+                    'errors' => $errors
+                ], 403);
+            }
+        }
+
+        if ($request->referral_code){
+            $refer_user = $this->user->where(['referral_code' => $request->referral_code])->first();
+        }
+
         $temporary_token = Str::random(40);
-        $user = User::create([
+
+        $user = $this->user->create([
             'f_name' => $request->f_name,
             'l_name' => $request->l_name,
             'email' => $request->email??'',
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
             'temporary_token' => $temporary_token,
+            'referral_code' => Helpers::generate_referer_code(),
+            'referred_by' => $refer_user->id ?? null,
         ]);
 
         $phone_verification = Helpers::get_business_settings('phone_verification');
@@ -181,7 +423,11 @@ class CustomerAuthController extends Controller
         return response()->json(['token' => $token], 200);
     }
 
-    public function login(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function login(Request $request): JsonResponse
     {
         if($request->has('email_or_phone'))
         {
@@ -207,10 +453,28 @@ class CustomerAuthController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        $user = User::where(['email' => $user_id])->orWhere(['phone' => $user_id])->first();
+        $user = $this->user->where(['email' => $user_id])->orWhere(['phone' => $user_id])->first();
+
+        $max_login_hit = Helpers::get_business_settings('maximum_login_hit') ?? 5;
+        $temp_block_time = Helpers::get_business_settings('temporary_login_block_time') ?? 600; // seconds
+
         if (isset($user)) {
+
+            if(isset($user->temp_block_time ) && Carbon::parse($user->temp_block_time)->DiffInSeconds() <= $temp_block_time){
+                $time = $temp_block_time - Carbon::parse($user->temp_block_time)->DiffInSeconds();
+
+                $errors = [];
+                $errors[] = ['code' => 'login_block_time',
+                    'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                ];
+                return response()->json([
+                    'errors' => $errors
+                ], 403);
+            }
+
             $user->temporary_token = Str::random(40);
             $user->save();
+
             $data = [
                 'email' => $user->email,
                 'password' => $request->password,
@@ -219,7 +483,66 @@ class CustomerAuthController extends Controller
 
             if (auth()->attempt($data)) {
                 $token = auth()->user()->createToken('RestaurantCustomerAuth')->accessToken;
+
+                $user->login_hit_count = 0;
+                $user->is_temp_blocked = 0;
+                $user->temp_block_time = null;
+                $user->updated_at = now();
+                $user->save();
+
                 return response()->json(['token' => $token], 200);
+
+            }
+            else{
+                $customer = $this->user->where(['email' => $user_id])->orWhere(['phone' => $user_id])->first();
+
+                if(isset($customer)){
+                    if(isset($user->temp_block_time ) && Carbon::parse($user->temp_block_time)->DiffInSeconds() <= $temp_block_time){
+                        $time= $temp_block_time - Carbon::parse($user->temp_block_time)->DiffInSeconds();
+
+                        $errors = [];
+                        $errors[] = [
+                            'code' => 'login_block_time',
+                            'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                        ];
+                        return response()->json([
+                            'errors' => $errors
+                        ], 403);
+                    }
+
+
+                    if($user->is_temp_blocked == 1 && Carbon::parse($user->temp_block_time)->DiffInSeconds() >= $temp_block_time){
+
+                        $user->login_hit_count = 0;
+                        $user->is_temp_blocked = 0;
+                        $user->temp_block_time = null;
+                        $user->updated_at = now();
+                        $user->save();
+                    }
+
+                    if($user->login_hit_count >= $max_login_hit &&  $user->is_temp_blocked == 0){
+                        $user->is_temp_blocked = 1;
+                        $user->temp_block_time = now();
+                        $user->updated_at = now();
+                        $user->save();
+
+                        $time= $temp_block_time - Carbon::parse($user->temp_block_time)->DiffInSeconds();
+
+                        $errors = [];
+                        $errors[] = [
+                            'code' => 'login_temp_blocked',
+                            'message' => translate('Too_many_attempts. please_try_again_after_'). CarbonInterval::seconds($time)->cascade()->forHumans()
+                        ];
+                        return response()->json([
+                            'errors' => $errors
+                        ], 403);
+                    }
+                }
+
+                $user->login_hit_count += 1;
+                $user->temp_block_time = null;
+                $user->updated_at = now();
+                $user->save();
             }
         }
 
@@ -231,7 +554,12 @@ class CustomerAuthController extends Controller
 
     }
 
-    public function social_customer_login(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws GuzzleException
+     */
+    public function social_customer_login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',
@@ -267,7 +595,7 @@ class CustomerAuthController extends Controller
         }
 
         if (strcmp($email, $data['email']) === 0) {
-            $user = User::where('email', $request['email'])->first();
+            $user = $this->user->where('email', $request['email'])->first();
 
             if (!isset($user)) {
                 $name = explode(' ', $data['name']);
@@ -279,7 +607,7 @@ class CustomerAuthController extends Controller
                     $last_name = '';
                 }
 
-                $user = new User();
+                $user = $this->user;
                 $user->f_name = $fast_name;
                 $user->l_name = $last_name;
                 $user->email = $data['email'];
@@ -288,24 +616,15 @@ class CustomerAuthController extends Controller
                 $user->password = bcrypt($request->ip());
                 $user->is_block = 0;
                 $user->login_medium = $request['medium'];
+                $user->referral_code = Helpers::generate_referer_code();
                 $user->save();
             }
 
-            if (isset($user)){
-                if ($user->is_block == 0){
-                    $token = $user->createToken('AuthToken')->accessToken;
-                    return response()->json([
-                        'errors' => null,
-                        'token' => $token,
-                    ], 200);
-                }else{
-                    $errors = [];
-                    $errors[] = ['code' => 'auth-001', 'message' => 'Invalid Token'];
-                    return response()->json([
-                        'errors' => $errors
-                    ], 401);
-                }
-            }
+            $token = $user->createToken('AuthToken')->accessToken;
+            return response()->json([
+                'errors' => null,
+                'token' => $token,
+            ], 200);
         }
 
         $errors = [];

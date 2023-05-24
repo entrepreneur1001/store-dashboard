@@ -10,23 +10,24 @@ class DeliveryMan extends Authenticatable
 {
     use Notifiable;
 
-    public function reviews()
+    public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DMReview::class,'delivery_man_id');
     }
 
-    public function rating()
+    public function rating(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DMReview::class)
             ->select(DB::raw('avg(rating) average, delivery_man_id'))
             ->groupBy('delivery_man_id');
     }
 
-    public function orders(){
+    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
         return $this->hasMany(Order::class,'delivery_man_id');
     }
 
-    public function branch()
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }

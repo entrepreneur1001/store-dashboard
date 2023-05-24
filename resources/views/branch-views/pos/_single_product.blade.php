@@ -1,5 +1,22 @@
 
 <div class="product-card card" onclick="quickView('{{$product->id}}')">
+    <?php
+        $category_id = null;
+        foreach (json_decode($product['category_ids'], true) as $cat) {
+            if ($cat['position'] == 1){
+                $category_id = ($cat['id']);
+            }
+        }
+
+        $category_discount = \App\CentralLogics\Helpers::category_discount_calculate($category_id, $product['price']);
+        $product_discount = \App\CentralLogics\Helpers::discount_calculate($product, $product['price']);
+
+        if ($category_discount >= $product['price']){
+            $discount = $product_discount;
+        }else{
+            $discount = max($category_discount, $product_discount);
+        }
+    ?>
     <div class="card-header inline_product clickable p-0">
     @if (!empty(json_decode($product['image'],true)))
         <img src="{{asset('storage/app/public/product')}}/{{json_decode($product['image'], true)[0]}}"
@@ -16,7 +33,7 @@
         </div>
         <div class="justify-content-between text-center">
             <div class="product-price text-center">
-                {{ Helpers::set_symbol($product['price']- \App\CentralLogics\Helpers::discount_calculate($product, $product['price'])) }}
+                {{ Helpers::set_symbol($product['price'] - $discount) }}
             </div>
         </div>
     </div>

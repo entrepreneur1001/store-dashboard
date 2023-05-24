@@ -49,10 +49,9 @@
                        style="width: 100%">
                     <thead class="thead-light">
                     <tr>
-                        <th class="">
-                            {{translate('#')}}
-                        </th>
+                        <th class="">{{translate('#')}}</th>
                         <th>{{translate('email')}}</th>
+                        <th>{{translate('subscribed_at')}}</th>
                     </tr>
                     </thead>
 
@@ -65,6 +64,7 @@
                             <td>
                                 <a href="mailto:{{$newsletter['email']}}?subject={{translate('Mail from '). \App\Model\BusinessSetting::where(['key' => 'restaurant_name'])->first()->value}}">{{$newsletter['email']}}</a>
                             </td>
+                            <td>{{date('Y/m/d '.config('timeformat'), strtotime($newsletter->created_at))}}</td>
                         </tr>
 
                     @endforeach

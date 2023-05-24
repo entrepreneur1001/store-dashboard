@@ -7,14 +7,25 @@ use App\Http\Controllers\Controller;
 use App\Model\FlashDeal;
 use App\Model\FlashDealProduct;
 use App\Model\Product;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class OfferController extends Controller
 {
-    public function get_flash_deal(Request $request)
+    public function __construct(
+        private FlashDeal $flash_deal,
+        private FlashDealProduct $flash_deal_product,
+        private Product $product
+    ){}
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function get_flash_deal(Request $request): JsonResponse
     {
         try {
-            $flash_deals = FlashDeal::active()
+            $flash_deals = $this->flash_deal->active()
                 ->where('deal_type','flash_deal')
                 ->first();
 
@@ -24,9 +35,14 @@ class OfferController extends Controller
         }
     }
 
-    public function get_flash_deal_products(Request $request, $flash_deal_id)
+    /**
+     * @param Request $request
+     * @param $flash_deal_id
+     * @return JsonResponse
+     */
+    public function get_flash_deal_products(Request $request, $flash_deal_id): JsonResponse
     {
-        $p_ids = FlashDealProduct::with(['product'])
+        $p_ids = $this->flash_deal_product->with(['product'])
             ->whereHas('product',function($q){
                 $q->active();
             })
@@ -37,7 +53,7 @@ class OfferController extends Controller
         //dd($p_ids);
 
         if (count($p_ids) > 0) {
-            $paginator = Product::with(['rating'])
+            $paginator = $this->product->with(['rating'])
                ->whereIn('id', $p_ids)
                ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 

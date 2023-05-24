@@ -31,12 +31,10 @@
                                     <div class="form-group">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('coupon')}} {{translate('type')}}</label>
                                         <select name="coupon_type" class="form-control" onchange="coupon_type_change(this.value)">
-                                            <option value="default" {{$coupon['coupon_type']=='default'?'selected':''}}>
-                                                {{translate('default')}}
-                                            </option>
-                                            <option value="first_order" {{$coupon['coupon_type']=='first_order'?'selected':''}}>
-                                                {{translate('first')}} {{translate('order')}}
-                                            </option>
+                                            <option value="default" {{$coupon['coupon_type']=='default'?'selected':''}}>{{translate('default')}}</option>
+                                            <option value="first_order" {{$coupon['coupon_type']=='first_order'?'selected':''}}>{{translate('first')}} {{translate('order')}}</option>
+                                            <option value="free_delivery" {{$coupon['coupon_type']=='free_delivery'?'selected':''}}>{{translate('free_delivery')}}</option>
+                                            <option value="customer_wise" {{$coupon['coupon_type']=='customer_wise'?'selected':''}}>{{translate('customer_wise')}}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -61,7 +59,7 @@
                                             placeholder="{{ translate('EX: 10') }}">
                                     </div>
                                 </div>
-                                <div class="col-md-4 col-sm-6">
+                                <div class="col-md-4 col-sm-6" id="discount_type_div" style="display: {{$coupon['coupon_type']=='free_delivery'?'none':'block'}}">
                                     <div class="form-group">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('discount')}} {{translate('type')}}</label>
                                         <select name="discount_type" id="discount_type" class="form-control">
@@ -71,11 +69,11 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-4 col-sm-6">
+                                <div class="col-md-4 col-sm-6" id="discount_amount_div" style="display: {{$coupon['coupon_type']=='free_delivery'?'none':'block'}}">
                                     <div class="form-group">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('discount')}}</label>
-                                        <input type="number" min="1" max="10000" step="any" value="{{$coupon['discount']}}"
-                                            name="discount" class="form-control" required>
+                                        <input type="number" min="0" max="10000" step="any" value="{{$coupon['discount']}}"
+                                            name="discount" class="form-control" >
                                     </div>
                                 </div>
 
@@ -87,7 +85,8 @@
                                             placeholder="{{ translate('100') }}">
                                     </div>
                                 </div>
-                                <div class="col-md-4 col-sm-6" id="max_discount_div" style="@if($coupon['discount_type']=='amount') display: none; @endif">
+{{--                                style="@if($coupon['discount_type']=='amount') display: none; @endif"--}}
+                                <div class="col-md-4 col-sm-6 {{$coupon['coupon_type']=='free_delivery' || $coupon->discount_type == 'amount'?'d-none':'d-block'}}" id="max_discount_div" >
                                     <div class="form-group">
                                         <label class="input-label" for="exampleFormControlInput1">{{translate('max')}} {{translate('discount')}}</label>
                                         <input type="number" min="0" max="1000000" step="any"
@@ -99,7 +98,7 @@
                                         <label class="input-label"
                                                for="">{{translate('start')}} {{translate('date')}}</label>
                                         <label class="input-date">
-                                            <input type="text" name="start_date"
+                                            <input type="text" name="start_date" id="start_date"
                                                    class="js-flatpickr form-control flatpickr-custom"
                                                    placeholder="{{ translate('Select dates') }}"
                                                    value="{{date('Y/m/d',strtotime($coupon['start_date']))}}"
@@ -114,7 +113,7 @@
                                         <label class="input-label"
                                                for="">{{translate('expire')}} {{translate('date')}}</label>
                                         <label class="input-date">
-                                            <input type="text" name="expire_date"
+                                            <input type="text" name="expire_date" id="expire_date"
                                                    class="js-flatpickr form-control flatpickr-custom"
                                                    placeholder="{{ translate('Select dates') }}"
                                                    value="{{date('Y/m/d',strtotime($coupon['expire_date']))}}"
@@ -124,10 +123,19 @@
                                         </label>
                                     </div>
                                 </div>
+                                <div class="col-md-4 col-6" id="customer_div" style="display: {{$coupon['coupon_type']=='customer_wise'?'block':'none'}}">
+                                    <div class="form-group">
+                                        <label class="input-label" for="exampleFormControlInput1">{{translate('customer')}}</label>
+                                        <select name="customer_id" id="customer_id" class="form-control js-select2-custom">
+{{--                                            <option value="">{{translate('')}}</option>--}}
+                                            @foreach($customers as $customer)
+                                                <option value="{{$customer->id}}" {{ $customer->id == $coupon['customer_id'] ? 'selected' : '' }}>{{$customer->f_name.' '. $customer->l_name}}</option>
+                                            @endforeach
+                                        </select>
 
+                                    </div>
+                                </div>
                             </div>
-
-
 
                             <div class="btn--container justify-content-end">
                                 <button type="reset" class="btn btn--reset">{{translate('reset')}}</button>
@@ -145,6 +153,29 @@
 
 @push('script_2')
     <script>
+
+
+
+        // $(".js-select2-custom").select2({
+        //     placeholder: "select customer",
+        //     allowClear: true
+        // });
+        //
+        // $('form').on('reset', function(e)
+        // {
+        //     $(".js-select2-custom").val('').trigger('change')
+        // });
+
+
+        var initialSelect2Value = $('.js-select2-custom').val();
+        $('form').on('reset', function() {
+            this.reset();
+            $('.js-select2-custom').val(initialSelect2Value).trigger('change');
+        });
+
+
+
+
         $("#discount_type").change(function(){
             if(this.value === 'amount') {
                 $("#max_discount_div").hide();
@@ -163,14 +194,85 @@
             });
         });
 
+        $('#start_date,#expire_date').change(function () {
+            let fr = $('#start_date').val();
+            let to = $('#expire_date').val();
+            if (fr != '' && to != '') {
+                if (fr > to) {
+                    $('#start_date').val('');
+                    $('#expire_date').val('');
+                    toastr.error('Invalid date range!', Error, {
+                        CloseButton: true,
+                        ProgressBar: true
+                    });
+                }
+            }
+        });
+
+        // function coupon_type_change(order_type) {
+        //     if(order_type==='first_order'){
+        //         $('#user-limit').removeAttr('required');
+        //         $('#limit-for-user').hide();
+        //     }else{
+        //         $('#user-limit').prop('required',true);
+        //         $('#limit-for-user').show();
+        //     }
+        // }
+
         function coupon_type_change(order_type) {
             if(order_type==='first_order'){
                 $('#user-limit').removeAttr('required');
                 $('#limit-for-user').hide();
-            }else{
+
+                $('#customer_id').removeAttr('required',true);
+                $('#customer_div').addClass('d-none');
+
+                $('#discount_type_div').show();
+
+                $('#discount_amount_div').show();
+
+               // $('#max_discount_div').show();
+            }
+            else if(order_type==='customer_wise'){
+                $('#user-limit').prop('required');
+                $('#limit-for-user').show();
+
+                $('#customer_id').prop('required', true);
+                $('#customer_div').removeClass('d-none');
+
+                $('#discount_type_div').show();
+
+                $('#discount_amount_div').show();
+
+                //$('#max_discount_div').show();
+            }
+            else if(order_type==='free_delivery'){
+                $('#user-limit').prop('required');
+                $('#limit-for-user').show();
+
+                $('#customer_id').removeAttr('required',true);
+                $('#customer_div').addClass('d-none');
+
+                $('#discount_type_div').hide();
+
+                $('#discount_amount_div').hide();
+
+                //$('#max_discount_div').hide();
+            }
+            else{
                 $('#user-limit').prop('required',true);
                 $('#limit-for-user').show();
+
+                $('#customer_id').removeAttr('required',true);
+                $('#customer_div').addClass('d-none');
+
+                $('#discount_type_div').show();
+
+                $('#discount_amount_div').show();
+
+                //$('#max_discount_div').show();
             }
         }
     </script>
+
 @endpush

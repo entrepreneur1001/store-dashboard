@@ -15,7 +15,7 @@
                     <img src="{{asset('public/assets/admin/img/order.png')}}" class="w--20" alt="">
                 </span>
                 <span>
-                    {{translate('orders details')}}
+                    {{ translate('orders details')}}
                 </span>
             </h1>
             <div class="d-flex justify-content-end d-print-none">
@@ -84,7 +84,7 @@
                             </div>
                             <div class="text-right mt-3 order-invoice-right-contents text-capitalize">
                                 <h6>
-                                    {{translate('Status ')}} :
+                                    {{ translate('Status') }} :
                                     @if($order['order_status']=='pending')
                                         <span class="badge badge-soft-info ml-2 ml-sm-3 text-capitalize">
                                         {{translate('pending')}}
@@ -103,17 +103,17 @@
                                         </span>
                                     @elseif($order['order_status']=='delivered')
                                         <span class="badge badge-soft-success ml-2 ml-sm-3 text-capitalize">
-                                        {{translate('delivered')}}
+                                        {{ translate('delivered')}}
                                         </span>
                                     @else
                                         <span class="badge badge-soft-danger ml-2 ml-sm-3 text-capitalize">
-                                        {{str_replace('_',' ',$order['order_status'])}}
+                                        {{ translate(str_replace('_',' ',$order['order_status'])) }}
                                         </span>
                                     @endif
                                 </h6>
                                 <h6 class="text-capitalize">
                                     <span class="text-body mr-2">{{translate('payment')}} {{translate('method')}}
-                                    :</span> <span class="text--title font-bold">{{str_replace('_',' ',$order['payment_method'])}}</span>
+                                    :</span> <span class="text--title font-bold">{{ translate(str_replace('_',' ',$order['payment_method'])) }}</span>
                                 </h6>
                                 <h6 class="text-capitalize">
                                     @if($order['transaction_reference']==null && $order['order_type']!='pos')
@@ -129,7 +129,7 @@
                                     @endif
                                 </h6>
                                 <h6>
-                                    <span class="text-body mr-2">{{translate('Payment Status ')}} : </span>
+                                    <span class="text-body mr-2">{{ translate('Payment Status') }} : </span>
 
                                     @if($order['payment_status']=='paid')
                                         <span class="badge badge-soft-success ml-sm-3">
@@ -163,6 +163,8 @@
                         @php($total_dis_on_pro=0)
                         @php($total_item_discount=0)
                         @php($price_after_discount=0)
+                        @php($updated_total_tax=0)
+                        @php($vat_status = '')
                         <div class="table-responsive">
                             <table class="table table-borderless table-nowrap table-align-middle card-table dataTable no-footer mb-0">
                                 <thead class="thead-light">
@@ -225,6 +227,8 @@
                                                 {{--@php($amount=($detail['price']-$detail['discount_on_product'])*$detail['quantity'])--}}
                                                 @php($amount+=$detail['price']*$detail['quantity'])
                                                 @php($total_tax+=$detail['tax_amount']*$detail['quantity'])
+                                                @php($updated_total_tax+= $detail['vat_status'] === 'included' ? 0 : $detail['tax_amount']*$detail['quantity'])
+                                                @php($vat_status = $detail['vat_status'])
                                                 @php($total_item_discount += $detail['discount_on_product'] * $detail['quantity'])
                                                 @php($price_after_discount+=$amount-$total_item_discount)
                                                 @php($sub_total+=$price_after_discount)
@@ -272,7 +276,7 @@
                                     </dd>
                                     <dt class="col-6 text-left">
                                         <div class="ml-auto max-w-130px">
-                                            {{translate('TAX')}} / {{translate('VAT')}} :
+                                            {{translate('TAX')}} / {{translate('VAT')}} {{ $vat_status == 'included' ? translate('(included)') : '' }}:
                                         </div>
                                     </dt>
                                     <dd class="col-6 col-xl-5 pr-5">
@@ -327,7 +331,7 @@
                                             {{translate('total')}}:
                                         </div>
                                     </dt>
-                                    <dd class="col-6 col-xl-5 pr-5">{{ Helpers::set_symbol($total+$del_c+$total_tax-$order['coupon_discount_amount']-$order['extra_discount']) }}</dd>
+                                    <dd class="col-6 col-xl-5 pr-5">{{ Helpers::set_symbol($total+$del_c+$updated_total_tax-$order['coupon_discount_amount']-$order['extra_discount']) }}</dd>
                                 </dl>
                                 <!-- End Row -->
                             </div>
@@ -553,6 +557,7 @@
                                         {{translate('Walking Customer')}}
                                     </span>
                                 </div>
+                            </div>
                                 @endif
                                 @if($order->user_id != null && !isset($order->customer) )
                                     <div class="media align-items-center deco-none customer--information-single">
@@ -564,6 +569,7 @@
                                                 {{translate('Customer_not_available')}}
                                             </span>
                                         </div>
+                                    </div>
                                         @endif
                                         @if(isset($order->customer) )
                                             <div class="media align-items-center deco-none customer--information-single">
@@ -571,18 +577,18 @@
                                                     <img class="avatar-img" onerror="this.src='{{asset('public/assets/admin/img/admin.jpg')}}'" src="{{asset('storage/app/public/profile/'.$order->customer->image)}}" alt="Image Description">
                                                 </div>
                                                 <div class="media-body">
-                                    <span class="fz--14px text--title font-semibold text-hover-primary d-block">
-                                        <a href="{{route('admin.customer.view',[$order['user_id']])}}">{{$order->customer['f_name'].' '.$order->customer['l_name']}}</a>
-                                    </span>
+                                                    <span class="fz--14px text--title font-semibold text-hover-primary d-block">
+                                                        <a href="{{route('admin.customer.view',[$order['user_id']])}}">{{$order->customer['f_name'].' '.$order->customer['l_name']}}</a>
+                                                    </span>
                                                     <span>{{\App\Model\Order::where('user_id',$order['user_id'])->count()}} {{translate("orders")}}</span>
                                                     <span class="text--title font-semibold d-block">
-                                <i class="tio-call-talking-quiet mr-2"></i>
-                                <a href="Tel:{{$order->customer['phone']}}">{{$order->customer['phone']}}</a>
-                            </span>
+                                                        <i class="tio-call-talking-quiet mr-2"></i>
+                                                        <a href="Tel:{{$order->customer['phone']}}">{{$order->customer['phone']}}</a>
+                                                    </span>
                                                     <span class="text--title">
-                                <i class="tio-email mr-2"></i>
-                                <a href="mailto:{{$order->customer['email']}}">{{$order->customer['email']}}</a>
-                            </span>
+                                                    <i class="tio-email mr-2"></i>
+                                                    <a href="mailto:{{$order->customer['email']}}">{{$order->customer['email']}}</a>
+                                                </span>
                                                 </div>
                                             </div>
                                         @endif
@@ -809,7 +815,7 @@
                     <div class="row">
                         <div class="col-md-12 my-2">
                             <ul class="list-group overflow-auto initial--23">
-                                @foreach (\App\Model\DeliveryMan::all() as $dm)
+                                @foreach ($delivery_man as $dm)
                                     <li class="list-group-item">
                                         <span class="dm_list" role='button' data-id="{{ $dm['id'] }}">
                                             <img class="avatar avatar-sm avatar-circle mr-1"
@@ -844,12 +850,19 @@
                 url: '{{url('/')}}/branch/orders/add-delivery-man/{{$order['id']}}/' + id,
                 data: $('#product_form').serialize(),
                 success: function (data) {
+                    //console.log(data);
                     location.reload();
-
-                    toastr.success('{{ translate("Deliveryman successfully assigned/changed") }}', {
-                        CloseButton: true,
-                        ProgressBar: true
-                    });
+                    if(data.status == true) {
+                        toastr.success('{{ translate("Deliveryman successfully assigned/changed") }}', {
+                            CloseButton: true,
+                            ProgressBar: true
+                        });
+                    }else{
+                        toastr.error('{{ translate("Deliveryman man can not assign/change in that status") }}', {
+                            CloseButton: true,
+                            ProgressBar: true
+                        });
+                    }
                 },
                 error: function () {
                     toastr.error('{{ translate("Add valid data") }}', {

@@ -14,7 +14,7 @@ class Conversation extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function user()
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);
     }

@@ -121,7 +121,7 @@
                                                 <li>
                                                     <div
                                                         class="mb-2 d-flex align-items-center justify-content-between gap-10 flex-wrap">
-                                                        <span class="zone-name">{{$item['category']['name']}}</span>
+                                                        <span class="zone-name">{{$item->category?->name}}</span>
                                                         <span class="booking-count">{{number_format(($item['count']*100)/$total, 2)  }} %</span>
                                                     </div>
                                                     <div class="progress">
@@ -197,13 +197,13 @@
                         <tr>
                             <td>{{$searched_table_data->firstitem()+$key}}</td>
                             <td>{{$item->keyword??''}}</td>
-                            <td class="text-center">{{$item->volume_count}}</td>
+                            <td class="text-center">{{$item->volume_count ?? ''}}</td>
                             <td class="text-center">
                                 <a href="#" data-toggle="tooltip" data-html="true" data-placement="right" title="
                                         <?php
                                             $categories = json_decode($item->searched_category);
                                             foreach ($categories as $cat) {
-                                                echo $cat->category->name . '<br>' ;
+                                                echo $cat->category?->name . '<br>' ;
                                             }
 
                                         ?>">

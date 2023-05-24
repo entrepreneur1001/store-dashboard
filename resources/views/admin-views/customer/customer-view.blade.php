@@ -11,6 +11,21 @@
         <!-- Page Header -->
 
         <div class="d-print-none pb-2">
+            <div class="page-header border-bottom">
+                <h1 class="page-header-title">
+                <span class="page-header-icon">
+                    <img src="{{asset('public/assets/admin/img/employee.png')}}" class="w--20" alt="">
+                </span>
+                    <span class="page-header-title pt-2">
+                        {{translate('customer_Details')}}
+                    </span>
+                </h1>
+            </div>
+            <!-- End Page Header -->
+
+        </div>
+
+        <div class="d-print-none pb-2">
             <div class="row align-items-center">
                 <div class="col-auto mb-2 mb-sm-0">
                     <h1 class="page-header-title">{{translate('customer')}} {{translate('id')}} #{{$customer['id']}}</h1>
@@ -34,25 +49,26 @@
             </div>
         </div>
         <!-- End Page Header -->
-<!--        <div class="row mb-2 g-2">
-            &lt;!&ndash; Collected Cash Card Example &ndash;&gt;
+        <div class="row mb-2 g-2">
+
+
             <div class="col-lg-6 col-md-6 col-sm-6">
-                <div class="resturant-card bg&#45;&#45;2">
+                <div class="resturant-card bg--2">
                     <img class="resturant-icon" src="{{asset('/public/assets/admin/img/dashboard/1.png')}}" alt="dashboard">
                     <div class="for-card-text font-weight-bold  text-uppercase mb-1">{{translate('wallet')}} {{translate('balance')}}</div>
-                    <div class="for-card-count">{{$customer->wallet_balance??0}}</div>
+                    <div class="for-card-count">{{\App\CentralLogics\Helpers::set_symbol($customer->wallet_balance??0)}}</div>
                 </div>
             </div>
 
-            &lt;!&ndash; Pending Requests Card Example &ndash;&gt;
+
             <div class="col-lg-6 col-md-6 col-sm-6">
-                <div class="resturant-card bg&#45;&#45;3">
+                <div class="resturant-card bg--3">
                     <img class="resturant-icon" src="{{asset('/public/assets/admin/img/dashboard/3.png')}}" alt="dashboard">
                     <div class="for-card-text font-weight-bold  text-uppercase mb-1">{{translate('loyalty_point')}} {{translate('balance')}}</div>
                     <div class="for-card-count">{{$customer->loyalty_point??0}}</div>
                 </div>
             </div>
-        </div>-->
+        </div>
 
 
         <div class="row" id="printableArea">
@@ -193,10 +209,10 @@
                             </div>
                             @foreach($customer->addresses as $address)
                                 <ul class="list-unstyled list-unstyled-py-2">
-                                    @if($address['contact_person_umber'])
+                                    @if($address['contact_person_number'])
                                         <li>
                                             <i class="tio-call-talking-quiet mr-2"></i>
-                                            {{$address['contact_person_umber']}}
+                                            {{$address['contact_person_number']}}
                                         </li>
                                     @endif
                                     <li class="quick--address-bar">
@@ -204,7 +220,7 @@
                                             <i class="tio-home"></i>
                                         </div>
                                         <div class="info">
-                                            <h6>{{$address['address_type']}}</h6>
+                                            <h6>{{ translate($address['address_type'])}}</h6>
                                             <a target="_blank" href="http://maps.google.com/maps?z=12&t=m&q=loc:{{$address['latitude']}}+{{$address['longitude']}}" class="text--title">
                                                 {{$address['address']}}
                                             </a>

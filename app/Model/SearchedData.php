@@ -22,12 +22,12 @@ class SearchedData extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function searched_key()
+    public function searched_key(): BelongsTo
     {
         return $this->belongsTo(RecentSearch::class, 'attribute_id');
     }
 
-    public function product()
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'attribute_id');
     }

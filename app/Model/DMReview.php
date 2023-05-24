@@ -16,17 +16,17 @@ class DMReview extends Model
         'updated_at' => 'datetime'
     ];
 
-    public function customer()
+    public function customer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class,'user_id');
     }
 
-    public function order()
+    public function order(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function delivery_man()
+    public function delivery_man(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(DeliveryMan::class,'delivery_man_id');
     }

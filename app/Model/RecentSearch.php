@@ -15,27 +15,27 @@ class RecentSearch extends Model
         'keyword',
     ];
 
-    public function response_data_count()
+    public function response_data_count(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(SearchedData::class, 'attribute_id');
     }
 
-    public function volume()
+    public function volume(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(SearchedKeywordCount::class, 'recent_search_id', 'id');
     }
 
-    public function searched_category()
+    public function searched_category(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(SearchedCategory::class, 'recent_search_id', 'id');
     }
 
-    public function searched_product()
+    public function searched_product(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(SearchedProduct::class, 'recent_search_id', 'id');
     }
 
-    public function searched_user()
+    public function searched_user(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(SearchedKeywordUser::class, 'recent_search_id', 'id');
     }

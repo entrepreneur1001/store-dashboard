@@ -17,22 +17,22 @@
             <ul class="nav nav-tabs border-0 mb-3">
                 <li class="nav-item">
                     <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.language.index')}}">
-                        Language Setup
+                        {{translate('Language Setup')}}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" href="{{route('admin.business-settings.web-app.system-setup.app_setting')}}">
-                        App Settings
+                        {{translate('App Settings')}}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.firebase_message_config_index')}}">
-                        Firebase Configuration
+                        {{translate('Firebase Configuration')}}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.db-index')}}">
-                        Clean Database
+                        {{translate('Clean Database')}}
                     </a>
                 </li>
             </ul>
@@ -74,7 +74,7 @@
                                            for="ios_min_version">
                                            <span>{{ translate('Minimum version for force update') }}</span>
                                            <span class="form-label-secondary ml-1" data-toggle="tooltip" data-placement="right" data-original-title="{{ translate("If there is any update available in the admin panel and for that, the previous user app will not work, you can force the customer from here by providing the minimum version for force update. That means if a customer has an app below this version the customers must need to update the app first. If you don't need a force update just insert here zero (0) and ignore it.") }}"><img src="{{asset('public/assets/admin/img/info-circle.svg')}}" alt="info">
-
+                                           </span>
                                     </label>
                                     <input type="number" min="0" step=".1" id="android_min_version" name="android_min_version"
                                            value="{{$config['min_version']??''}}" class="form-control"
@@ -83,7 +83,7 @@
 
                             </div>
                             <div class="btn--container justify-content-end">
-                                <button type="reset" class="btn btn--reset">{{'reset'}}</button>
+                                <button type="reset" class="btn btn--reset">{{ translate('reset') }}</button>
                                 <button type="{{env('APP_MODE')!='demo'?'submit':'button'}}"
                                         onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}"
                                         class="btn btn--primary mb-2">{{translate('save')}}</button>
@@ -126,7 +126,7 @@
                                            for="ios_min_version">
                                            <span>{{ translate('Minimum version for force update') }}</span>
                                            <span class="form-label-secondary ml-1" data-toggle="tooltip" data-placement="right" data-original-title='{{ translate("If there is any update available in the admin panel and for that, the previous user app will not work, you can force the customer from here by providing the minimum version for force update. That means if a customer has an app below this version the customers must need to update the app first. If you don't need a force update just insert here zero (0) and ignore it.") }}'><img src="{{asset('public/assets/admin/img/info-circle.svg')}}" alt="info">
-
+                                           </span>
                                     </label>
                                     <input type="number" min="0" step=".1" id="ios_min_version" name="ios_min_version"
                                            value="{{$config['min_version']??''}}" class="form-control"
@@ -135,7 +135,7 @@
 
                             </div>
                             <div class="btn--container justify-content-end">
-                                <button type="reset" class="btn btn--reset">{{'reset'}}</button>
+                                <button type="reset" class="btn btn--reset">{{ translate('reset')}}</button>
                                 <button type="{{env('APP_MODE')!='demo'?'submit':'button'}}"
                                     onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}"
                                     class="btn btn--primary">{{translate('save')}}</button>

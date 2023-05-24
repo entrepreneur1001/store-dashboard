@@ -21,12 +21,29 @@ use Illuminate\Http\JsonResponse;
 
 class CustomerController extends Controller
 {
-    public function address_list(Request $request)
+    public function __construct(
+        private Conversation $conversation,
+        private CustomerAddress $customer_address,
+        private Newsletter $newsletter,
+        private Order $order,
+        private OrderDetail $order_detail,
+        private User $user
+    ){}
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function address_list(Request $request): JsonResponse
     {
-        return response()->json(CustomerAddress::where('user_id', $request->user()->id)->latest()->get(), 200);
+        return response()->json($this->customer_address->where('user_id', $request->user()->id)->latest()->get(), 200);
     }
 
-    public function add_new_address(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function add_new_address(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'contact_person_name' => 'required',
@@ -57,7 +74,12 @@ class CustomerController extends Controller
         return response()->json(['message' => 'successfully added!'], 200);
     }
 
-    public function update_address(Request $request,$id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return JsonResponse
+     */
+    public function update_address(Request $request, $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'contact_person_name' => 'required',
@@ -88,7 +110,11 @@ class CustomerController extends Controller
         return response()->json(['message' => 'successfully updated!'], 200);
     }
 
-    public function delete_address(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_address(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'address_id' => 'required'
@@ -105,13 +131,21 @@ class CustomerController extends Controller
         return response()->json(['message' => 'No such data found!'], 404);
     }
 
-    public function get_order_list(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function get_order_list(Request $request): JsonResponse
     {
-        $orders = Order::where(['user_id' => $request->user()->id])->get();
+        $orders = $this->order->where(['user_id' => $request->user()->id])->get();
         return response()->json($orders, 200);
     }
 
-    public function get_order_details(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function get_order_details(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'order_id' => 'required'
@@ -121,7 +155,7 @@ class CustomerController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        $details = OrderDetail::where(['order_id' => $request['order_id']])->get();
+        $details = $this->order_detail->where(['order_id' => $request['order_id']])->get();
         foreach ($details as $det) {
             $det['product_details'] = Helpers::product_data_formatting(json_decode($det['product_details'], true));
         }
@@ -129,18 +163,24 @@ class CustomerController extends Controller
         return response()->json($details, 200);
     }
 
-    public function info(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function info(Request $request): JsonResponse
     {
        return response()->json($request->user(), 200);
     }
 
-    public function update_profile(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update_profile(Request $request): JsonResponse
     {
-        //dd(auth()->user()->id);
         $validator = Validator::make($request->all(), [
             'f_name' => 'required',
             'l_name' => 'required',
-            //'phone' => 'required',
             'phone' => ['required', 'unique:users,phone,'.auth()->user()->id]
         ], [
             'f_name.required' => 'First name is required!',
@@ -182,12 +222,16 @@ class CustomerController extends Controller
             'updated_at' => now()
         ];
 
-        User::where(['id' => $request->user()->id])->update($userDetails);
+        $this->user->where(['id' => $request->user()->id])->update($userDetails);
 
         return response()->json(['message' => 'successfully updated!'], 200);
     }
 
-    public function update_cm_firebase_token(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update_cm_firebase_token(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'cm_firebase_token' => 'required',
@@ -204,7 +248,11 @@ class CustomerController extends Controller
         return response()->json(['message' => 'successfully updated!'], 200);
     }
 
-    public function subscribe_newsletter(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function subscribe_newsletter(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required',
@@ -214,9 +262,9 @@ class CustomerController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        $newsLetter = Newsletter::where('email', $request->email)->first();
+        $newsLetter = $this->newsletter->where('email', $request->email)->first();
         if (!isset($newsLetter)) {
-            $newsLetter = new Newsletter();
+            $newsLetter = $this->newsletter;
             $newsLetter->email = $request->email;
             $newsLetter->save();
 
@@ -227,9 +275,13 @@ class CustomerController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function remove_account(Request $request): JsonResponse
     {
-        $customer = User::find($request->user()->id);
+        $customer = $this->user->find($request->user()->id);
         if(isset($customer)) {
             Helpers::file_remover('profile/', $customer->image);
             $customer->delete();
@@ -238,7 +290,7 @@ class CustomerController extends Controller
             return response()->json(['status_code' => 404, 'message' => translate('Not found')], 200);
         }
 
-        $conversations = Conversation::where('user_id', $customer->id)->get();
+        $conversations = $this->conversation->where('user_id', $customer->id)->get();
         foreach ($conversations as $conversation){
             if ($conversation->checked == 0){
                 $conversation->checked = 1;
@@ -248,20 +300,4 @@ class CustomerController extends Controller
 
         return response()->json(['status_code' => 200, 'message' => translate('Successfully deleted')], 200);
     }
-
-   /* public function unsubscribe_topic(Request $request)
-    {
-        $user = User::where('id',$request->user()->id)->first();
-        'https://iid.googleapis.com/iid/v1/'. $user->cm_firebase_token .'/rel/topics/'. $request['topic'];
-        return response()->json(['status_code' => 200, 'message' => translate('Unsubscribed')], 200);
-    }*/
-
-
-
-
-
-
-
-
-
 }

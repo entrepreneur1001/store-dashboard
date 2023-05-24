@@ -3,10 +3,14 @@
 namespace App\CentralLogics;
 
 
+use App\Model\CategoryDiscount;
 use App\Model\FavoriteProduct;
+use App\Model\Order;
+use App\Model\OrderDetail;
 use App\Model\Product;
 use App\Model\Review;
 use App\User;
+use Illuminate\Support\Facades\DB;
 
 class ProductLogic
 {
@@ -17,8 +21,11 @@ class ProductLogic
 
     public static function get_latest_products($limit = 10, $offset = 1)
     {
-        $paginator = Product::active()->withCount(['wishlist'])->with(['rating', 'active_reviews'])->latest()->paginate($limit, ['*'], 'page', $offset);
-        /*$paginator->count();*/
+        $paginator = Product::active()
+            ->withCount(['wishlist'])
+            ->with(['rating', 'active_reviews'])
+            ->latest()->paginate($limit, ['*'], 'page', $offset);
+
         return [
             'total_size' => $paginator->total(),
             'limit' => $limit,
@@ -61,6 +68,13 @@ class ProductLogic
             foreach ($key as $value) {
                 $q->orWhere('name', 'like', "%{$value}%");
             }
+            $q->orWhereHas('tags',function($query) use ($key){
+                $query->where(function($q) use ($key){
+                    foreach ($key as $value) {
+                        $q->where('tag', 'like', "%{$value}%");
+                    };
+                });
+            });
         })->paginate($limit, ['*'], 'page', $offset);
 
         return [
@@ -123,6 +137,106 @@ class ProductLogic
     public static function get_popular_products($limit = 10, $offset = 1)
     {
         $paginator = Product::active()->with(['rating', 'active_reviews'])->orderBy('popularity_count', 'desc')->paginate($limit, ['*'], 'page', $offset);
+        return [
+            'total_size' => $paginator->total(),
+            'limit' => $limit,
+            'offset' => $offset,
+            'products' => $paginator->items()
+        ];
+    }
+
+    public static function get_most_viewed_products($limit = 10, $offset = 1)
+    {
+        $paginator = Product::active()
+            ->with(['rating', 'active_reviews'])
+            ->orderBy('view_count', 'desc')
+            ->paginate($limit, ['*'], 'page', $offset);
+
+        return [
+            'total_size' => $paginator->total(),
+            'limit' => $limit,
+            'offset' => $offset,
+            'products' => $paginator->items()
+        ];
+    }
+
+    public static function get_trending_products($limit = 10, $offset = 1)
+    {
+        if(OrderDetail::count() > 0) {
+            $paginator = Product::active()
+                ->with(['rating', 'active_reviews'])
+                ->whereHas('order_details', function ($query) {
+                    $query->where('created_at', '>', now()->subDays(30)->endOfDay());
+                })
+                ->withCount('order_details')
+                ->orderBy('order_details_count', 'desc')
+                ->paginate($limit, ['*'], 'page', $offset);
+
+        } else {
+            $paginator = Product::active()
+                ->with(['rating', 'active_reviews'])
+                ->inRandomOrder()
+                ->paginate($limit, ['*'], 'page', $offset);
+        }
+
+        return [
+            'total_size' => $paginator->total(),
+            'limit' => $limit,
+            'offset' => $offset,
+            'products' => $paginator->items()
+        ];
+    }
+
+    public static function get_recommended_products($user, $limit = 10, $offset = 1)
+    {
+        if($user != null) {
+            $order_ids = Order::where('user_id', $user->id)->pluck('id');
+            $product_ids = OrderDetail::whereIn('order_id', $order_ids)->pluck('product_id')->toArray();
+            $categoryIds = Product::whereIn('id', $product_ids)->pluck('category_ids')->toArray();
+
+            $ids = [];
+            foreach ($categoryIds as $value) {
+                $items = json_decode($value);
+                foreach ($items as $item) {
+                    if ($item->position == 1) {
+                        $ids[] = $item->id;
+                    }
+                }
+            }
+            $ids = array_unique($ids);
+
+            $paginator = Product::active()
+                ->with(['rating', 'active_reviews'])
+                ->where(function ($query) use ($ids) {
+                    foreach ($ids as $id) {
+                        $query->orWhereJsonContains('category_ids', [['id' => $id, 'position' => 1]]);
+                    }
+                })
+                ->paginate($limit, ['*'], 'page', $offset);
+
+        } else {
+            $paginator = Product::active()
+                ->with(['rating', 'active_reviews'])
+                ->inRandomOrder()
+                ->paginate($limit, ['*'], 'page', $offset);
+        }
+
+        return [
+            'total_size' => $paginator->total(),
+            'limit' => $limit,
+            'offset' => $offset,
+            'products' => $paginator->items()
+        ];
+    }
+
+    public static function get_most_reviewed_products($limit = 10, $offset = 1)
+    {
+        $paginator = Product::active()
+            ->with(['rating', 'active_reviews'])
+            ->withCount('active_reviews')
+            ->orderBy('active_reviews_count', 'desc')
+            ->paginate($limit, ['*'], 'page', $offset);
+
         return [
             'total_size' => $paginator->total(),
             'limit' => $limit,

@@ -163,7 +163,7 @@
                                 <td><a href="{{route('admin.customer.view',['user_id'=>$wt->user_id])}}">{{Str::limit($wt->user?$wt->user->f_name.' '.$wt->user->l_name:translate('not_found'),20,'...')}}</a></td>
                                 <td>{{$wt->credit}}</td>
                                 <td>{{$wt->debit}}</td>
-                                <td>{{$wt->balance}}</td>
+                                <td>{{Helpers::set_symbol($wt->balance)}}</td>
                                 <td>
                                     <span class="badge badge-soft-{{$wt->transaction_type=='order_refund'
                                         ?'danger'

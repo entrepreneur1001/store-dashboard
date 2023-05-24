@@ -16,7 +16,7 @@ class Translation extends Model
         'value',
     ];
 
-    public function translationable()
+    public function translationable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {
         return $this->morphTo();
     }

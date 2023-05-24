@@ -25,12 +25,12 @@
         <div class="card">
             <!-- Header -->
             <div class="card-header shadow flex-wrap p-20px border-0">
-                <h5 class="form-bold w-100 mb-3">Select Date Range</h5>
+                <h5 class="form-bold w-100 mb-3">{{ translate('Select Date Range') }}</h5>
                 <form class="w-100">
                     <div class="row g-3 g-sm-4 g-md-3 g-lg-4">
                         <div class="col-sm-6 col-md-3">
                             <div class="input-date-group">
-                                <label class="input-label" for="start_date">Start Date</label>
+                                <label class="input-label" for="start_date">{{ translate('Start Date') }}</label>
                                 <label class="input-date">
                                     <input type="text" id="start_date" name="start_date" value="{{$start_date}}" class="js-flatpickr form-control flatpickr-custom min-h-45px" placeholder="yy/mm/dd" data-hs-flatpickr-options='{ "dateFormat": "Y-m-d"}'>
                                 </label>
@@ -38,7 +38,7 @@
                         </div>
                         <div class="col-sm-6 col-md-3">
                             <div class="input-date-group">
-                                <label class="input-label" for="end_date">End Date</label>
+                                <label class="input-label" for="end_date">{{ translate('End Date') }}</label>
                                 <label class="input-date">
                                     <input type="text" id="end_date" name="end_date" value="{{$end_date}}" class="js-flatpickr form-control flatpickr-custom min-h-45px" placeholder="yy/mm/dd" data-hs-flatpickr-options='{ "dateFormat": "Y-m-d"}'>
                                 </label>
@@ -129,7 +129,7 @@
                                     {{$key+$orders->firstItem()}}
                                 </td>
                                 <td class="">
-                                    <a href="{{route('branch.orders.details',['id'=>$order['id']])}}">{{$order['id']}}</a>
+                                    <a href="{{route('branch.pos.order-details',['id'=>$order['id']])}}">{{$order['id']}}</a>
                                 </td>
                                 <td>{{date('d M Y',strtotime($order['created_at']))}}</td>
                                 <td>
@@ -155,7 +155,15 @@
                                 <td>
                                     <div class="mw-85">
                                         <div>
-                                            {{ Helpers::set_symbol($order['order_amount']) }}
+                                                <?php
+                                                $vat_status = $order->details[0] ? $order->details[0]->vat_status : '';
+                                                if($vat_status == 'included'){
+                                                    $order_amount = $order['order_amount'] - $order['total_tax_amount'];
+                                                }else{
+                                                    $order_amount = $order['order_amount'];
+                                                }
+                                                ?>
+                                            {{ Helpers::set_symbol($order_amount) }}
                                         </div>
                                         @if($order->payment_status=='paid')
                                             <span class="text-success">
@@ -191,7 +199,7 @@
                                         </span>
                                     @else
                                         <span class="badge badge-soft-danger">
-                                        {{str_replace('_',' ',$order['order_status'])}}
+                                            {{ translate(str_replace('_',' ',$order['order_status'])) }}
                                         </span>
                                     @endif
                                 </td>
@@ -213,7 +221,7 @@
                                 <td>
                                     <div class="btn--container justify-content-center">
                                         <a class="action-btn btn--primary btn-outline-primary"
-                                                href="{{route('branch.orders.details',['id'=>$order['id']])}}"><i
+                                                href="{{route('branch.pos.order-details',['id'=>$order['id']])}}"><i
                                                         class="tio-visible-outlined"></i></a>
                                         <button class="action-btn btn-outline-primary-2" target="_blank" type="button"
                                                 onclick="print_invoice('{{$order->id}}')"><i

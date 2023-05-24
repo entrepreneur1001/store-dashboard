@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Model\BusinessSetting;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,5 +33,7 @@ class AppServiceProvider extends ServiceProvider
                 date_default_timezone_set($timezone->value);
             }
         }catch(\Exception $exception){}
+        Paginator::useBootstrap();
+
     }
 }

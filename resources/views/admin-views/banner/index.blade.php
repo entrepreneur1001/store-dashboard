@@ -139,9 +139,9 @@
                             </td>
                             <td>
                                 @if($banner['product_id'])
-                                    Product : {{$banner->product?$banner->product->name:''}}
+                                    {{ translate('Product') }} : {{$banner->product?$banner->product->name:''}}
                                 @elseif($banner['category_id'])
-                                    Category : {{$banner->category?$banner->category->name:''}}
+                                    {{ translate('Category') }} : {{$banner->category?$banner->category->name:''}}
                                 @endif
                             </td>
                             <td>

@@ -131,18 +131,9 @@
                                     <label class="input-label"
                                             for="exampleFormControlInput1">{{translate('unit')}}</label>
                                     <select name="unit" class="form-control js-select2-custom">
-                                        <option value="kg" {{$product['unit']=='kg'?'selected':''}}>
-                                            {{translate('kg')}}
-                                        </option>
-                                        <option value="gm" {{$product['unit']=='gm'?'selected':''}}>
-                                            {{translate('gm')}}
-                                        </option>
-                                        <option value="ltr" {{$product['unit']=='ltr'?'selected':''}}>
-                                            {{translate('ltr')}}
-                                        </option>
-                                        <option value="pc" {{$product['unit']=='pc'?'selected':''}}>
-                                            {{translate('pc')}}
-                                        </option>
+                                        <option value="kg" {{$product['unit']=='kg'?'selected':''}}>{{translate('kg')}}</option>
+                                        <option value="gm" {{$product['unit']=='gm'?'selected':''}}>{{translate('gm')}}</option>
+                                        <option value="ltr" {{$product['unit']=='ltr'?'selected':''}}>{{translate('ltr')}}</option><option value="pc" {{$product['unit']=='pc'?'selected':''}}>{{translate('pc')}}</option>
                                     </select>
                                 </div>
                             </div>
@@ -153,6 +144,15 @@
                                     <input type="number" min="0" step="0.01" value="{{$product['capacity']}}"  name="capacity"
                                             class="form-control"
                                             placeholder="{{ translate('Ex : 5') }}" required>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label class="input-label"
+                                           for="exampleFormControlInput1">{{translate('maximum_order_quantity')}}</label>
+                                    <input type="number" min="1" step="1" value="{{$product['maximum_order_quantity']}}" name="maximum_order_quantity"
+                                           class="form-control"
+                                           placeholder="{{ translate('Ex : 3') }}" required>
                                 </div>
                             </div>
                         </div>
@@ -166,7 +166,7 @@
                                     {{translate('Turning Visibility off will not show this product in the user app and website')}}
                                 </div>
                                 <div class="d-flex align-items-center mb-2 mb-sm-0">
-                                    <h5 class="mb-0 mr-2">Visibility</h5>
+                                    <h5 class="mb-0 mr-2">{{ translate('Visibility') }}</h5>
                                     <label class="toggle-switch my-0">
                                         <input type="checkbox" class="toggle-switch-input" name="status" value="1" {{$product['status']==1?'checked':''}}>
                                         <span class="toggle-switch-label mx-auto text">
@@ -179,7 +179,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12">
+            <div class="col-lg-6">
                 <div class="card">
                     <div class="card-body">
                     <h5 class="mb-3">{{translate('product')}} {{translate('image')}} <small
@@ -194,6 +194,31 @@
                                         </div>
                                     @endforeach
                                 @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <span class="card-header-icon">
+                                <i class="tio-label"></i>
+                            </span>
+                            <span>
+                                {{translate('tags')}}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-2">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" name="tags" placeholder="Enter tags" value="@foreach($product->tags as $c) {{$c->tag.','}} @endforeach" data-role="tagsinput">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -531,6 +556,26 @@
             }
         });
 
+    </script>
+
+    <script>
+        function update_qty() {
+            var total_qty = 0;
+            var qty_elements = $('input[name^="stock_"]');
+            for(var i=0; i<qty_elements.length; i++)
+            {
+                total_qty += parseInt(qty_elements.eq(i).val());
+            }
+            if(qty_elements.length > 0)
+            {
+                $('input[name="total_stock"]').attr("readonly", true);
+                $('input[name="total_stock"]').val(total_qty);
+                console.log(total_qty)
+            }
+            else{
+                $('input[name="total_stock"]').attr("readonly", false);
+            }
+        }
     </script>
 
 @endpush

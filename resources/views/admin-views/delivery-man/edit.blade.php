@@ -80,7 +80,7 @@
                                         </option>
                                         <option
                                             value="restaurant_id" {{$delivery_man['identity_type']=='restaurant_id'?'selected':''}}>
-                                            {{translate('restaurant')}} {{translate('id')}}
+                                            {{translate('store')}} {{translate('id')}}
                                         </option>
                                     </select>
                                 </div>

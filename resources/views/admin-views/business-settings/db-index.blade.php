@@ -18,22 +18,22 @@
             <ul class="nav nav-tabs border-0 mb-3">
                 <li class="nav-item">
                     <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.language.index')}}">
-                        Language Setup
+                        {{ translate('Language Setup') }}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.app_setting')}}">
-                        App Settings
+                        {{ translate('App Settings') }}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.firebase_message_config_index')}}">
-                        Firebase Configuration
+                        {{ translate('Firebase Configuration') }}
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" href="{{route('admin.business-settings.web-app.system-setup.db-index')}}">
-                        Clean Database
+                        {{ translate('Clean Database') }}
                     </a>
                 </li>
             </ul>

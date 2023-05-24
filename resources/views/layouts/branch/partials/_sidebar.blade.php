@@ -38,7 +38,7 @@
                     <form class="sidebar--search-form">
                         <div class="search--form-group">
                             <button type="button" class="btn"><i class="tio-search"></i></button>
-                            <input type="text" class="form-control form--control" placeholder="Search Menu..." id="search-sidebar-menu">
+                            <input type="text" class="form-control form--control" placeholder="{{ translate('Search Menu...') }}" id="search-sidebar-menu">
                         </div>
                     </form>
                     <ul class="navbar-nav navbar-nav-lg nav-tabs">

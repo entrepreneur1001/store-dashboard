@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use File;
 use Illuminate\Container\Container;
@@ -13,7 +17,10 @@ use Illuminate\Support\Str;
 
 class DatabaseSettingsController extends Controller
 {
-    public function db_index()
+    /**
+     * @return Application|Factory|View
+     */
+    public function db_index(): View|Factory|Application
     {
         $tables = DB::connection()->getDoctrineSchemaManager()->listTableNames();
         $filter_tables = array('admins', 'admin_roles', 'branches', 'business_settings', 'email_verifications', 'failed_jobs', 'migrations', 'oauth_access_tokens', 'oauth_auth_codes', 'oauth_clients', 'oauth_personal_access_clients', 'oauth_refresh_tokens', 'password_resets', 'phone_verifications', 'soft_credentials', 'users', 'currencies', 'colors');
@@ -22,13 +29,17 @@ class DatabaseSettingsController extends Controller
         $rows = [];
         foreach ($tables as $table) {
             $count = DB::table($table)->count();
-            array_push($rows, $count);
+            $rows[] = $count;
         }
 
         return view('admin-views.business-settings.db-index', compact('tables', 'rows'));
     }
 
-    public function clean_db(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function clean_db(Request $request): RedirectResponse
     {
         $tables = (array)$request->tables;
 

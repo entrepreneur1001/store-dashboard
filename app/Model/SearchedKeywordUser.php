@@ -18,17 +18,17 @@ class SearchedKeywordUser extends Model
 
     protected $fillable = ['recent_search_id', 'user_id'];
 
-    public function customer()
+    public function customer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    public function related_category()
+    public function related_category(): HasMany
     {
         return $this->hasMany(CategorySearchedByUser::class, 'user_id', 'user_id');
     }
 
-    public function related_product()
+    public function related_product(): HasMany
     {
         return $this->hasMany(ProductSearchedByUser::class, 'user_id', 'user_id');
     }
@@ -38,7 +38,8 @@ class SearchedKeywordUser extends Model
         return $this->hasMany(VisitedProduct::class, 'user_id', 'user_id');
     }
 
-    public function orders(){
+    public function orders(): HasMany
+    {
         return $this->hasMany(Order::class,'user_id', 'user_id');
     }
 

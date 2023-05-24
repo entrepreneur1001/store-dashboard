@@ -3,6 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Box\Spout\Common\Exception\InvalidArgumentException;
+use Box\Spout\Common\Exception\IOException;
+use Box\Spout\Common\Exception\UnsupportedTypeException;
+use Box\Spout\Writer\Exception\WriterNotOpenedException;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Model\Admin;
 use App\Model\AdminRole;
@@ -11,16 +19,29 @@ use Illuminate\Support\Facades\DB;
 use App\CentralLogics\Helpers;
 use Illuminate\Support\Facades\Storage;
 use Rap2hpoutre\FastExcel\FastExcel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeeController extends Controller
 {
-    public function add_new()
+    public function __construct(
+        private Admin $admin,
+        private AdminRole $admin_role
+    ){}
+
+    /**
+     * @return Factory|View|Application
+     */
+    public function add_new(): View|Factory|Application
     {
-        $rls = AdminRole::whereNotIn('id', [1])->get();
+        $rls = $this->admin_role->whereNotIn('id', [1])->get();
         return view('admin-views.employee.add-new', compact('rls'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): RedirectResponse
     {
         //return $request;
         $request->validate([
@@ -56,7 +77,7 @@ class EmployeeController extends Controller
         if (!empty($request->file('identity_image'))) {
             foreach ($request->identity_image as $img) {
                 $identity_image = Helpers::upload('admin/', 'png', $img);
-                array_push($id_img_names, $identity_image);
+                $id_img_names[] = $identity_image;
             }
             $identity_image = json_encode($id_img_names);
         } else {
@@ -83,29 +104,51 @@ class EmployeeController extends Controller
         return redirect()->route('admin.employee.list');
     }
 
-    function list(Request $request)
+    /**
+     * @param Request $request
+     * @return Factory|View|Application
+     */
+    function list(Request $request): View|Factory|Application
     {
         $search = $request['search'];
         $key = explode(' ', $request['search']);
-        $em = Admin::with(['role'])->whereNotIn('id', [1])
-                    ->when($search!=null, function($query) use($key){
-                        foreach ($key as $value) {
-                            $query->where('f_name', 'like', "%{$value}%")
-                                ->orWhere('phone', 'like', "%{$value}%")
-                                ->orWhere('email', 'like', "%{$value}%");
-                        }
-                    })
-                    ->paginate(Helpers::getPagination());
+
+        $query = $this->admin->with(['role'])
+            ->when($search != null, function ($query) use ($key) {
+                $query->whereNotIn('id', [1])->where(function ($query) use ($key) {
+                    foreach ($key as $value) {
+                        $query->where('f_name', 'like', "%{$value}%")
+                            ->orWhere('phone', 'like', "%{$value}%")
+                            ->orWhere('email', 'like', "%{$value}%");
+                    }
+                });
+            }, function ($query) {
+                $query->whereNotIn('id', [1]);
+            });
+
+        $sql = $query->toSql();
+        $em = $query->paginate(Helpers::getPagination());
+
         return view('admin-views.employee.list', compact('em','search'));
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function edit($id): View|Factory|Application
     {
-        $e = Admin::where(['id' => $id])->first();
-        $rls = AdminRole::whereNotIn('id', [1])->get();
+        $e = $this->admin->where(['id' => $id])->first();
+        $rls = $this->admin_role->whereNotIn('id', [1])->get();
         return view('admin-views.employee.edit', compact('rls', 'e'));
     }
-    public function update(Request $request, $id)
+
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): RedirectResponse
     {
         $request->validate([
             'name' => 'required',
@@ -121,7 +164,7 @@ class EmployeeController extends Controller
             return back();
         }
 
-        $e = Admin::find($id);
+        $e = $this->admin->find($id);
         if ($request['password'] == null) {
             $pass = $e['password'];
         } else {
@@ -146,7 +189,7 @@ class EmployeeController extends Controller
             $img_keeper = [];
             foreach ($request->identity_image as $img) {
                 $identity_image = Helpers::upload('admin/', 'png', $img);
-                array_push($img_keeper, $identity_image);
+                $img_keeper[] = $identity_image;
             }
             $identity_image = json_encode($img_keeper);
         } else {
@@ -170,9 +213,13 @@ class EmployeeController extends Controller
         return redirect()->route('admin.employee.list');
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): RedirectResponse
     {
-        $employee = Admin::find($request->id);
+        $employee = $this->admin->find($request->id);
         $employee->status = $request->status;
         $employee->save();
 
@@ -180,17 +227,28 @@ class EmployeeController extends Controller
         return back();
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): RedirectResponse
     {
-        $employee = Admin::where('id', $request->id)->whereNotIn('id', [1])->first();
+        $employee = $this->admin->where('id', $request->id)->whereNotIn('id', [1])->first();
         $employee->delete();
         Toastr::success(translate('Employee removed!'));
         return back();
     }
 
-    public function export()
+    /**
+     * @return StreamedResponse|string
+     * @throws IOException
+     * @throws InvalidArgumentException
+     * @throws UnsupportedTypeException
+     * @throws WriterNotOpenedException
+     */
+    public function export(): StreamedResponse|string
     {
-        $employees = Admin::whereNotIn('id', [1])->get();
+        $employees = $this->admin->whereNotIn('id', [1])->get();
         $storage = [];
         foreach($employees as $employee){
             $role = $employee->role ? $employee->role->name : '';

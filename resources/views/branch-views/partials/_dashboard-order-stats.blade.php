@@ -91,7 +91,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <h6 class="card-subtitle d-flex justify-content-between m-0 align-items-center">
                 <img src="{{asset('public/assets/admin/img/delivery/4.png')}}" alt="dashboard" class="oder--card-icon">
-                <span>{{translate('failed_to_deliver')}}</span>
+                <span>{{translate('Failed to Delivered')}}</span>
             </h6>
             <span class="card-title text-danger">
                 {{$data['failed']}}

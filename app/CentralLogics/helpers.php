@@ -3,14 +3,17 @@
 namespace App\CentralLogics;
 
 use App\Model\BusinessSetting;
+use App\Model\CategoryDiscount;
 use App\Model\Currency;
 use App\Model\DMReview;
 use App\Model\Order;
 use App\Model\Review;
+use App\User;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Str;
 
 class Helpers
 {
@@ -18,7 +21,7 @@ class Helpers
     {
         $err_keeper = [];
         foreach ($validator->errors()->getMessages() as $index => $error) {
-            array_push($err_keeper, ['code' => $index, 'message' => $error[0]]);
+            $err_keeper[] = ['code' => $index, 'message' => $error[0]];
         }
         return $err_keeper;
     }
@@ -64,12 +67,26 @@ class Helpers
                 $item['image'] = json_decode($item['image']);
                 $item['attributes'] = json_decode($item['attributes']);
                 $item['choice_options'] = json_decode($item['choice_options']);
+
+                $categories = gettype($item['category_ids']) == 'array' ? $item['category_ids'] : json_decode($item['category_ids']);
+                if(!is_null($categories) && count($categories) > 0) {
+                    $ids = [];
+                    foreach ($categories as $value) {
+                        if ($value->position == 1) {
+                            $ids[] = $value->id;
+                        }
+                    }
+                    $item['category_discount']= CategoryDiscount::active()->where('category_id', $ids)->first();
+                } else {
+                    $item['category_discount'] = [];
+                }
+
                 foreach (json_decode($item['variations'], true) as $var) {
-                    array_push($variations, [
+                    $variations[] = [
                         'type' => $var['type'],
                         'price' => (float)$var['price'],
                         'stock' => isset($var['stock']) ? (integer)$var['stock'] : (integer)0,
-                    ]);
+                    ];
                 }
                 $item['variations'] = $variations;
 
@@ -93,12 +110,26 @@ class Helpers
             $data['image'] = json_decode($data['image']);
             $data['attributes'] = json_decode($data['attributes']);
             $data['choice_options'] = json_decode($data['choice_options']);
+
+            $categories = gettype($data['category_ids']) == 'array' ? $data['category_ids'] : json_decode($data['category_ids']);
+            if(!is_null($categories) && count($categories) > 0) {
+                $ids = [];
+                foreach ($categories as $value) {
+                    if ($value->position == 1) {
+                        $ids[] = $value->id;
+                    }
+                }
+                $data['category_discount']= CategoryDiscount::active()->where('category_id', $ids)->first();
+            } else {
+                $data['category_discount'] = [];
+            }
+
             foreach (json_decode($data['variations'], true) as $var) {
-                array_push($variations, [
+                $variations[] = [
                     'type' => $var['type'],
                     'price' => (float)$var['price'],
                     'stock' => isset($var['stock']) ? (integer)$var['stock'] : (integer)0,
-                ]);
+                ];
             }
             $data['variations'] = $variations;
             if (count($data['translations']) > 0) {
@@ -293,6 +324,24 @@ class Helpers
             $price_discount = ($price / 100) * $product['discount'];
         } else {
             $price_discount = $product['discount'];
+        }
+        return self::set_price($price_discount);
+    }
+
+    public static function category_discount_calculate($category_id, $price)
+    {
+        $category_discount = CategoryDiscount::active()->where(['category_id' => $category_id])->first();
+        if ($category_discount){
+            if ($category_discount['discount_type'] == 'percent') {
+                $price_discount = ($price / 100) * $category_discount['discount_amount'];
+                if ($category_discount['maximum_amount'] < $price_discount) {
+                    $price_discount = $category_discount['maximum_amount'];
+                }
+            } else {
+                $price_discount = $category_discount['discount_amount'];
+            }
+        }else{
+            $price_discount = 0;
         }
         return self::set_price($price_discount);
     }
@@ -691,7 +740,7 @@ class Helpers
 
     public static function remove_invalid_charcaters($str)
     {
-        return str_ireplace(['\'', '"', ',', ';', '<', '>', '?'], ' ', $str);
+        return str_ireplace(['"', ',', ';', '<', '>', '?'], ' ', $str);
     }
 
     public static function get_delivery_charge($distance)
@@ -740,6 +789,25 @@ class Helpers
         return true;
     }
 
+    public static function generate_referer_code() {
+        $ref_code = Str::random('20');
+        if (User::where('referral_code', '=', $ref_code)->exists()) {
+            return generate_referer_code();
+        }
+        return $ref_code;
+    }
+
+    public static function gen_mpdf($view, $file_prefix, $file_postfix)
+    {
+        $mpdf = new \Mpdf\Mpdf(['default_font' => 'FreeSerif', 'mode' => 'utf-8', 'format' => [190, 250]]);
+        $mpdf->autoScriptToLang = true;
+        $mpdf->autoLangToFont = true;
+        $mpdf_view = $view;
+        $mpdf_view = $mpdf_view->render();
+        $mpdf->WriteHTML($mpdf_view);
+        $mpdf->Output($file_prefix . $file_postfix . '.pdf', 'D');
+    }
+
 }
 
 function translate($key)
@@ -765,3 +833,5 @@ function translate($key)
 
     return $result;
 }
+
+

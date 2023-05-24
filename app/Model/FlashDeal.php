@@ -24,7 +24,7 @@ class FlashDeal extends Model
         'featured' => 'integer',
     ];
 
-    public function products()
+    public function products(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(FlashDealProduct::class, 'flash_deal_id');
     }

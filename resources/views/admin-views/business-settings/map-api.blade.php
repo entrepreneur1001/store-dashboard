@@ -19,11 +19,17 @@
             <div class="card-body">
                 <form action="{{env('APP_MODE')!='demo'?route('admin.business-settings.web-app.third-party.map-api-store'):'javascript:'}}" method="post">
                     @csrf
-                    @php($key=\App\Model\BusinessSetting::where('key','map_api_key')->first()->value)
-                    <div class="form-group">
-                        <label class="form-label">{{translate('map_api')}} {{translate('key')}}</label>
-                        <textarea name="map_api_key" class="form-control"
-                                    >{{env('APP_MODE')!='demo'?$key:''}}</textarea>
+                    <div class="row">
+                        @php($key=\App\Model\BusinessSetting::where('key','map_api_server_key')->first()?->value )
+                        <div class="form-group col-md-6">
+                            <label class="form-label">{{translate('map_api_server')}} {{translate('key')}}</label>
+                            <textarea name="map_api_server_key" class="form-control">{{env('APP_MODE')!='demo'?$key:''}}</textarea>
+                        </div>
+                        @php($key=\App\Model\BusinessSetting::where('key','map_api_client_key')->first()?->value)
+                        <div class="form-group col-md-6">
+                            <label class="form-label">{{translate('map_api_client')}} {{translate('key')}}</label>
+                            <textarea name="map_api_client_key" class="form-control">{{env('APP_MODE')!='demo'?$key:''}}</textarea>
+                        </div>
                     </div>
                     <div class="btn--container justify-content-end">
                         <button class="btn btn--reset" type="reset">{{translate('reset')}}</button>

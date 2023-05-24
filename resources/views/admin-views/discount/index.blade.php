@@ -46,7 +46,7 @@
                             <div class="form-group">
                                 <label class="input-label" for="exampleFormControlInput1">{{translate('start')}} {{translate('date')}}</label>
                                 <label class="input-date">
-                                    <input type="text" name="start_date" value="{{ old('start_date') }}" class="js-flatpickr form-control flatpickr-custom" placeholder="{{ \App\CentralLogics\translate('dd/mm/yy') }}" data-hs-flatpickr-options='{ "dateFormat": "Y/m/d", "minDate": "today" }' required>
+                                    <input type="text" name="start_date" id="start_date" value="{{ old('start_date') }}" class="js-flatpickr form-control flatpickr-custom" placeholder="{{ \App\CentralLogics\translate('dd/mm/yy') }}" data-hs-flatpickr-options='{ "dateFormat": "Y/m/d", "minDate": "today" }' required>
                                 </label>
                             </div>
                         </div>
@@ -54,7 +54,7 @@
                             <div class="form-group">
                                 <label class="input-label" for="exampleFormControlInput1">{{translate('expire')}} {{translate('date')}}</label>
                                 <label class="input-date">
-                                    <input type="text" name="expire_date" value="{{ old('expire_date') }}" class="js-flatpickr form-control flatpickr-custom" placeholder="{{ \App\CentralLogics\translate('dd/mm/yy') }}" data-hs-flatpickr-options='{ "dateFormat": "Y/m/d", "minDate": "today" }' required>
+                                    <input type="text" name="expire_date" id="expire_date" value="{{ old('expire_date') }}" class="js-flatpickr form-control flatpickr-custom" placeholder="{{ \App\CentralLogics\translate('dd/mm/yy') }}" data-hs-flatpickr-options='{ "dateFormat": "Y/m/d", "minDate": "today" }' required>
                                 </label>
                             </div>
                         </div>
@@ -206,6 +206,21 @@
             $('.js-flatpickr').each(function () {
                 $.HSCore.components.HSFlatpickr.init($(this));
             });
+        });
+
+        $('#start_date,#expire_date').change(function () {
+            let fr = $('#start_date').val();
+            let to = $('#expire_date').val();
+            if (fr != '' && to != '') {
+                if (fr > to) {
+                    $('#start_date').val('');
+                    $('#expire_date').val('');
+                    toastr.error('Invalid date range!', Error, {
+                        CloseButton: true,
+                        ProgressBar: true
+                    });
+                }
+            }
         });
 
         function show_item(type) {

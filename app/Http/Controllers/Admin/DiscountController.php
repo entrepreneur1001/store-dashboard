@@ -4,39 +4,54 @@ namespace App\Http\Controllers\Admin;
 
 use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
-use App\Model\Banner;
 use App\Model\Category;
 use App\Model\CategoryDiscount;
-use App\Model\Product;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class DiscountController extends Controller
 {
-    function index(Request $request)
+    public function __construct(
+        private Category $category,
+        private CategoryDiscount $category_discount
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    function index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if($request->has('search'))
         {
             $key = explode(' ', $request['search']);
-            $discounts = CategoryDiscount::where(function ($q) use ($key) {
+            $discounts = $this->category_discount->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('name', 'like', "%{$value}%");
                 }
             })->orderBy('id', 'desc');
             $query_param = ['search' => $request['search']];
         }else{
-            $discounts = CategoryDiscount::orderBy('id', 'desc');
+            $discounts = $this->category_discount->orderBy('id', 'desc');
         }
         $discounts = $discounts->paginate(Helpers::getPagination())->appends($query_param);
 
-        $categories = Category::where(['parent_id'=>0])->orderBy('name')->get();
+        $categories = $this->category->where(['parent_id'=>0])->orderBy('name')->get();
         return view('admin-views.discount.index', compact('discounts', 'categories','search'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|max:255',
@@ -61,7 +76,7 @@ class DiscountController extends Controller
             return back();
         }
 
-        $discount = new CategoryDiscount();
+        $discount = $this->category_discount;
         $discount->name = $request->name;
         $discount->category_id = $request->category_id;
         $discount->start_date = $request->start_date;
@@ -74,24 +89,38 @@ class DiscountController extends Controller
         return back();
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Application|Factory|View
+     */
+    public function edit($id): View|Factory|Application
     {
-        $discount = CategoryDiscount::find($id);
-        $categories = Category::where(['parent_id'=>0])->orderBy('name')->get();
+        $discount = $this->category_discount->find($id);
+        $categories = $this->category->where(['parent_id'=>0])->orderBy('name')->get();
         return view('admin-views.discount.edit', compact('discount', 'categories'));
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): RedirectResponse
     {
-        $discount = CategoryDiscount::find($request->id);
+        $discount = $this->category_discount->find($request->id);
         $discount->status = $request->status;
         $discount->save();
         Toastr::success(translate('Discount status updated!'));
         return back();
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): RedirectResponse
     {
+       // dd($request->all());
         $request->validate([
             'name' => 'required|max:255',
             'category_id' => 'required|unique:category_discounts,category_id,' .$id,
@@ -109,21 +138,26 @@ class DiscountController extends Controller
             'discount_amount.required'=>translate('Discount amount is required'),
         ]);
 
-        $discount = CategoryDiscount::find($id);
+        $discount = $this->category_discount->find($id);
         $discount->name = $request->name;
         $discount->category_id = $request->category_id;
         $discount->start_date = $request->start_date;
         $discount->expire_date = $request->expire_date;
         $discount->discount_type = $request->discount_type;
         $discount->discount_amount = $request->discount_amount;
+        $discount->maximum_amount = $request->discount_type == 'percent' ? $request->maximum_amount : 0;
         $discount->save();
         Toastr::success(translate('Discount updated successfully!'));
         return redirect()->route('admin.discount.add-new');
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): RedirectResponse
     {
-        $discount = CategoryDiscount::find($request->id);
+        $discount = $this->category_discount->find($request->id);
         $discount->delete();
         Toastr::success(translate('Discount removed!'));
         return back();

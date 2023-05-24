@@ -8,19 +8,34 @@ use App\Model\Banner;
 use App\Model\Category;
 use App\Model\Product;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+
 class BannerController extends Controller
 {
-    function index(Request $request)
+    public function __construct(
+       private Banner $banner,
+       private Product $product,
+       private Category $category
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Factory|View|Application
+     */
+    function index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if($request->has('search'))
         {
             $key = explode(' ', $request['search']);
-            $banners = Banner::where(function ($q) use ($key) {
+            $banners = $this->banner->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('title', 'like', "%{$value}%");
                     $q->orWhere('id', 'like', "%{$value}%");
@@ -28,24 +43,28 @@ class BannerController extends Controller
             })->orderBy('id', 'desc');
             $query_param = ['search' => $request['search']];
         }else{
-            $banners = Banner::orderBy('id', 'desc');
+            $banners = $this->banner->orderBy('id', 'desc');
         }
         $banners = $banners->paginate(Helpers::getPagination())->appends($query_param);
 
 
-        $products = Product::orderBy('name')->get();
-        $categories = Category::where(['parent_id'=>0])->orderBy('name')->get();
+        $products = $this->product->orderBy('name')->get();
+        $categories = $this->category->where(['parent_id'=>0])->orderBy('name')->get();
         return view('admin-views.banner.index', compact('products', 'categories', 'banners','search'));
     }
 
-    function list(Request $request)
+    /**
+     * @param Request $request
+     * @return Factory|View|Application
+     */
+    function list(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if($request->has('search'))
         {
             $key = explode(' ', $request['search']);
-            $banners = Banner::where(function ($q) use ($key) {
+            $banners = $this->banner->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('title', 'like', "%{$value}%");
                     $q->orWhere('id', 'like', "%{$value}%");
@@ -53,13 +72,17 @@ class BannerController extends Controller
             })->orderBy('id', 'desc');
             $query_param = ['search' => $request['search']];
         }else{
-            $banners = Banner::orderBy('id', 'desc');
+            $banners = $this->banner->orderBy('id', 'desc');
         }
         $banners = $banners->paginate(Helpers::getPagination())->appends($query_param);
         return view('admin-views.banner.list', compact('banners','search'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'title' => 'required|max:255',
@@ -69,7 +92,7 @@ class BannerController extends Controller
             'image.required'=>translate('Image is required'),
         ]);
 
-        $banner = new Banner;
+        $banner = $this->banner;
         $banner->title = $request->title;
         if ($request['item_type'] == 'product') {
             $banner->product_id = $request->product_id;
@@ -82,24 +105,37 @@ class BannerController extends Controller
         return back();
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function edit($id): View|Factory|Application
     {
-        $products = Product::orderBy('name')->get();
-        $banner = Banner::find($id);
-        $categories = Category::where(['parent_id'=>0])->orderBy('name')->get();
+        $products = $this->product->orderBy('name')->get();
+        $banner = $this->banner->find($id);
+        $categories = $this->category->where(['parent_id'=>0])->orderBy('name')->get();
         return view('admin-views.banner.edit', compact('banner', 'products', 'categories'));
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): RedirectResponse
     {
-        $banner = Banner::find($request->id);
+        $banner = $this->banner->find($request->id);
         $banner->status = $request->status;
         $banner->save();
         Toastr::success(translate('Banner status updated!'));
         return back();
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): RedirectResponse
     {
         $request->validate([
             'title' => 'required|max:255',
@@ -107,7 +143,7 @@ class BannerController extends Controller
             'title.required' => 'Title is required!',
         ]);
 
-        $banner = Banner::find($id);
+        $banner = $this->banner->find($id);
         $banner->title = $request->title;
         if ($request['item_type'] == 'product') {
             $banner->product_id = $request->product_id;
@@ -122,9 +158,13 @@ class BannerController extends Controller
         return redirect()->route('admin.banner.add-new');
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): RedirectResponse
     {
-        $banner = Banner::find($request->id);
+        $banner = $this->banner->find($request->id);
         if (Storage::disk('public')->exists('banner/' . $banner['image'])) {
             Storage::disk('public')->delete('banner/' . $banner['image']);
         }

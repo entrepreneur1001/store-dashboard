@@ -18,8 +18,8 @@
                 <div class="card-body">
                     <div class="btn--container justify-content-between align-items-center mb-2 pb-1">
                         <h5 class="card-title mb-2">
-                            <img src="{{asset('/public/assets/admin/img/business-analytics.png')}}" alt=""
-                                 class="card-icon"> Business Analytics
+                            <img src="{{asset('/public/assets/admin/img/business-analytics.png')}}" alt="" class="card-icon">
+                            {{ translate('Business Analytics') }}
                         </h5>
                         <div class="mb-2">
                             <select class="custom-select" name="statistics_type"
@@ -30,13 +30,11 @@
                                 </option>
                                 <option
                                     value="today" {{session()->has('statistics_type') && session('statistics_type') == 'today'?'selected':''}}>
-                                    Today's {{ translate("Statistics") }}
+                                    {{ translate("Today's Statistics") }}
                                 </option>
                                 <option
                                     value="this_month" {{session()->has('statistics_type') && session('statistics_type') == 'this_month'?'selected':''}}>
-                                    {{ translate("This") }}
-                                    Month's
-                                    {{ translate("Statistics") }}
+                                    {{ translate("This Month's Statistics") }}
                                 </option>
                             </select>
                         </div>
@@ -369,7 +367,7 @@
 
                     var options = {
                         series: [{
-                            name: "Orders",
+                            name: "{{ translate('Orders') }}",
                             data: [
                                 {{$order_statistics_chart[1]}}, {{$order_statistics_chart[2]}}, {{$order_statistics_chart[3]}}, {{$order_statistics_chart[4]}},
                                 {{$order_statistics_chart[5]}}, {{$order_statistics_chart[6]}}, {{$order_statistics_chart[7]}}, {{$order_statistics_chart[8]}},
@@ -480,7 +478,7 @@
                         },
                         colors: ['#87bcbf', '#107980'],
                         series: [{
-                            name: "Earning",
+                            name: "{{ translate('Earning') }}",
                             data: [{{$earning[1]}}, {{$earning[2]}}, {{$earning[3]}}, {{$earning[4]}}, {{$earning[5]}}, {{$earning[6]}}, {{$earning[7]}}, {{$earning[8]}}, {{$earning[9]}}, {{$earning[10]}}, {{$earning[11]}}, {{$earning[12]}}],
                         },
                         ],
@@ -673,7 +671,7 @@
 
                                 var options = {
                                     series: [{
-                                        name: "Orders",
+                                        name: "{{ translate('Orders') }}",
                                         data: response_data.orders,
                                     }],
                                     chart: {
@@ -761,7 +759,7 @@
                                     },
                                     colors: ['#87bcbf', '#107980'],
                                     series: [{
-                                        name: "Earning",
+                                        name: "{{ translate('Earning') }}",
                                         data: response_data.earning,
                                     }],
                                     markers: {

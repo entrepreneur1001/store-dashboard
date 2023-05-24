@@ -230,6 +230,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'PDF' => Barryvdh\DomPDF\Facade::class,
         'Helpers' => \App\CentralLogics\helpers::class,
+
     ],
 
 ];

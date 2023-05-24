@@ -17,7 +17,7 @@ class SearchedCategory extends Model
 
     protected $fillable = ['recent_search_id', 'category_id', 'user_id'];
 
-    public function category()
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
