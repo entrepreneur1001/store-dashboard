@@ -135,7 +135,7 @@
                         <center>
                             <input type="button" class="btn btn-primary non-printable"
                                     onclick="printDiv('printableArea')"
-                                    value="Proceed, If thermal printer is ready."/>
+                                    value="{{ translate('Proceed, If thermal printer is ready.') }}"/>
                             <a href="{{url()->previous()}}"
                                 class="btn btn-danger non-printable">{{translate('Back')}}</a>
                         </center>
@@ -255,8 +255,21 @@
                     if (currentVal < input.attr('max')) {
                         input.val(currentVal + 1).change();
                     }
-                    if (parseInt(input.val()) == input.attr('max')) {
-                        $(this).attr('disabled', true);
+                    // if (parseInt(input.val()) == input.attr('max')) {
+                    //     $(this).attr('disabled', true);
+                    // }
+
+                    var qty_max_val = parseInt($('#check_max_qty').val());
+                    var qty_max_val = qty_max_val + 1;
+                    if (parseInt(input.val()) >= qty_max_val) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{translate("Cart")}}',
+                            text: '{{translate('stock limit exceeded')}}.',
+                            confirmButtonText: '{{translate("Yes")}}',
+                        });
+                        //$(this).val($(this).data());
+                        input.val(qty_max_val-1);
                     }
 
                 }
@@ -275,9 +288,13 @@
             maxValue = parseInt($(this).attr('max'));
             valueCurrent = parseInt($(this).val());
 
+            var input_qty_max_val = parseInt($('#check_max_qty').val());
+            var input_qty_max_val = input_qty_max_val + 1;
+
+
             var name = $(this).attr('name');
             if (valueCurrent >= minValue) {
-                $(".btn-number[data-type='minus'][data-field='" + name + "']").removeAttr('disabled')
+                $(".btn-number[data-type='minus'][data-field='" + name + "']").removeAttr('disabled');
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -287,7 +304,17 @@
                 });
                 $(this).val($(this).data('oldValue'));
             }
-            if (valueCurrent <= maxValue) {
+
+            if(valueCurrent >= input_qty_max_val){
+                console.log(input_qty_max_val);
+                Swal.fire({
+                    icon: 'error',
+                    title: '{{translate("Cart")}}',
+                    text: '{{translate('the maximum value was reached')}}',
+                    confirmButtonText: '{{translate("Yes")}}',
+                });
+                $(this).val(input_qty_max_val-1)
+            } else if (valueCurrent <= maxValue) {
                 $(".btn-number[data-type='plus'][data-field='" + name + "']").removeAttr('disabled')
             } else {
                 Swal.fire({
@@ -296,7 +323,7 @@
                     text: '{{translate('Sorry, stock limit exceeded')}}.',
                     confirmButtonText: '{{translate("Yes")}}',
                 });
-                $(this).val($(this).data('oldValue'));
+                $(this).val(1)
             }
         });
         $(".input-number").keydown(function (e) {
@@ -371,7 +398,7 @@
                         Swal.fire({
                             icon: 'error',
                             title: "{{translate('Cart')}}",
-                            text: '{{translate('Sorry, product out of stock')}}.',
+                            text: '{{translate('product out of stock')}}.',
                             confirmButtonText: '{{translate("Yes")}}',
                         });
                         return false;

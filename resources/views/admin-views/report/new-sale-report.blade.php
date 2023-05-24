@@ -7,7 +7,7 @@
         <!-- Page Header -->
         <div class="page-header">
             <div class="media align-items-center">
-                <img class="w-60px" src="{{asset('public/assets/admin')}}/svg/illustrations/credit-card.svg"
+                <img class="w--20" src="{{asset('public/assets/admin')}}/svg/illustrations/credit-card.svg"
                      alt="Image Description">
                 <div class="media-body pl-3">
                     <h1 class="page-header-title mb-1">{{translate('sale')}} {{translate('report')}} {{translate('overview')}}</h1>
@@ -39,7 +39,7 @@
                                 </div>
                                 <div class="col-sm-6 col-md-4 col-lg-3">
                                     <div class="input-date-group">
-                                        <label class="input-label" for="start_date">Start Date</label>
+                                        <label class="input-label" for="start_date">{{ translate('Start Date') }}</label>
                                         <label class="input-date">
                                             <input type="text" id="start_date" name="start_date" value="{{$start_date}}" class="js-flatpickr form-control flatpickr-custom min-h-45px" placeholder="yy-mm-dd" data-hs-flatpickr-options='{ "dateFormat": "Y-m-d"}'>
                                         </label>
@@ -47,7 +47,7 @@
                                 </div>
                                 <div class="col-sm-6 col-md-4 col-lg-3">
                                     <div class="input-date-group">
-                                        <label class="input-label" for="end_date">End Date</label>
+                                        <label class="input-label" for="end_date">{{ translate('End Date') }}</label>
                                         <label class="input-date">
                                             <input type="text" id="end_date" name="end_date" value="{{$end_date}}" class="js-flatpickr form-control flatpickr-custom min-h-45px" placeholder="yy-mm-dd" data-hs-flatpickr-options='{ "dateFormat": "Y-m-d"}'>
                                         </label>

@@ -6,19 +6,31 @@ use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
 use App\Model\Notification;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class NotificationController extends Controller
 {
-    function index(Request $request)
+    public function __construct(
+        private Notification $notification
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Factory|View|Application
+     */
+    function index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if($request->has('search'))
         {
             $key = explode(' ', $request['search']);
-           $notifications = Notification::where(function ($q) use ($key) {
+           $notifications = $this->notification->where(function ($q) use ($key) {
                         foreach ($key as $value) {
                             $q->orWhere('title', 'like', "%{$value}%")
                             ->orWhere('description', 'like', "%{$value}%");
@@ -26,13 +38,17 @@ class NotificationController extends Controller
             });
             $query_param = ['search' => $request['search']];
         }else{
-           $notifications = new Notification;
+           $notifications = $this->notification;
         }
         $notifications = $notifications->latest()->paginate(Helpers::getPagination())->appends($query_param);
         return view('admin-views.notification.index', compact('notifications','search'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'title' => 'required|max:100',
@@ -48,7 +64,7 @@ class NotificationController extends Controller
             $image_name = null;
         }
 
-        $notification = new Notification;
+        $notification = $this->notification;
         $notification->title = $request->title;
         $notification->description = $request->description;
         $notification->image = $image_name;
@@ -67,13 +83,22 @@ class NotificationController extends Controller
         return back();
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function edit($id): View|Factory|Application
     {
-        $notification = Notification::find($id);
+        $notification = $this->notification->find($id);
         return view('admin-views.notification.edit', compact('notification'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'title' => 'required|max:100',
@@ -82,7 +107,7 @@ class NotificationController extends Controller
             'title.required' => 'title is required!',
         ]);
 
-        $notification = Notification::find($id);
+        $notification = $this->notification->find($id);
 
         if ($request->has('image')) {
             $image_name = Helpers::update('notification/', $notification->image, 'png', $request->file('image'));
@@ -98,18 +123,26 @@ class NotificationController extends Controller
         return back();
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $notification = Notification::find($request->id);
+        $notification = $this->notification->find($request->id);
         $notification->status = $request->status;
         $notification->save();
         Toastr::success(translate('Notification status updated!'));
         return back();
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $notification = Notification::find($request->id);
+        $notification = $this->notification->find($request->id);
         if (Storage::disk('public')->exists('notification/' . $notification['image'])) {
             Storage::disk('public')->delete('notification/' . $notification['image']);
         }

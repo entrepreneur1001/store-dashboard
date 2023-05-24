@@ -70,14 +70,15 @@
                     </thead>
 
                     <tbody>
+
                     @foreach($timeSlots as $key=>$timeSlot)
                         <tr>
                             <td class="text-center">{{$key+1}}</td>
                             <td class="text-center">
-                                <div>{{$timeSlot['start_time']}}</div>
+                                <div>{{ date(config('time_format'), strtotime($timeSlot['start_time'])) }}</div>
                             </td>
                             <td class="text-center">
-                                <div>{{$timeSlot['end_time']}}</div>
+                                <div>{{ date(config('time_format'), strtotime($timeSlot['end_time'])) }}</div>
                             </td>
                             <td class="text-center">
                                 @php

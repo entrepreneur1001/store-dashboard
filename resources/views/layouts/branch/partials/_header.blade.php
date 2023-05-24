@@ -91,16 +91,22 @@
                                     showCancelButton: true,
                                     confirmButtonColor: '#01684b',
                                     cancelButtonColor: '#363636',
-                                    confirmButtonText: `Yes`,
-                                    denyButtonText: `{{translate("Do not Logout")}}`,
+                                    confirmButtonText: '{{translate("Yes")}}',
+                                    cancelButtonText: '{{translate("No")}}',
                                     }).then((result) => {
                                     if (result.value) {
                                     location.href='{{route('branch.auth.logout')}}';
                                     } else{
-                                    Swal.fire('Canceled', '', 'info')
+                                        Swal.fire({
+                                        title: '{{translate("Canceled")}}',
+                                        confirmButtonText: '{{translate("Okay")}}',
+                                        })
                                     }
+
+
+
                                     })">
-                                    <span class="text-truncate pr-2" title="Sign out">{{\App\CentralLogics\translate('sign_out')}}</span>
+                                    <span class="text-truncate pr-2" title="Sign out">{{translate('sign_out')}}</span>
                                 </a>
                             </div>
                         </div>

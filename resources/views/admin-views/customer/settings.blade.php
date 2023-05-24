@@ -113,8 +113,8 @@
                             <div class="form-group m-0">
                                 <label class="input-label"
                                        for="intem_purchase_point">{{ translate('Minimum Loyalty Points To Transfer Into Wallet') }}</label>
-                                <input type="number" class="form-control" name="minimun_transfer_point" min="1"
-                                       value="{{ $data['loyalty_point_minimum_point'] ?? '0' }}">
+                                <input type="number" class="form-control" name="minimun_transfer_point"
+                                       value="{{ $data['loyalty_point_minimum_point'] ?? '1' }}">
                             </div>
                         </div>
                     </div>

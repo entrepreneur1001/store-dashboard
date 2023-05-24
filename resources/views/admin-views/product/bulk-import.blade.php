@@ -7,16 +7,16 @@
 @endpush
 
 @section('content')
-    
+
     <div class="content container-fluid">
         <!-- Page Header -->
         <div class="page-header">
             <h1 class="page-header-title">
                 <span class="page-header-icon">
-                    <img src="{{asset('/public/assets/admin/img/category.png')}}" class="w--24" alt="">
+                    <img src="{{asset('/public/assets/admin/img/bulk.png')}}" class="w--20" alt="">
                 </span>
                 <span>
-                    {{translate('Bulk Import')}}
+                    {{ translate('bulk') }} {{ translate('import') }}
                 </span>
             </h1>
         </div>
@@ -46,13 +46,13 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="text-center mt-2">
-                                {{translate("Do not have the template ?")}} 
+                                {{ translate("Do not have the template") }}?
                                 <a href="{{asset('public/assets/product_bulk_format.xlsx')}}" download="" class="text--primary-2">{{ translate('Download Here') }}</a>
                             </h5>
                             <div class="form-group mt-4">
                                 <label class="drag--area mb-0 mx-auto cursor-pointer" ondrop="drop(event)" ondragover="allowDrop(event)">
                                     <img class="icon" src="{{asset('/public/assets/admin/img/cloud.png')}}" alt="">
-                                    <div class="drag-header">{{translate('Click here to import the .xlsx file here')}}</div>
+                                    <div class="drag-header">{{ translate('Click here to import the .xlsx file here') }}</div>
                                     <div class="__choose-input">
                                         <input type="file" name="products_file" class="form-control" id="import-file" accept=".xlsx" >
                                     </div>

@@ -28,7 +28,12 @@ trait ActivationClass
                     Session::put(base64_decode('dXNlcm5hbWU='), $request[base64_decode('dXNlcm5hbWU=')]);//un
                     return base64_decode('c3RlcDM=');//s3
                 } else {
-                    return base64_decode('aHR0cHM6Ly82YW10ZWNoLmNvbS9zb2Z0d2FyZS1hY3RpdmF0aW9u');
+                    $activation_url = base64_decode('aHR0cHM6Ly9hY3RpdmF0aW9uLjZhbXRlY2guY29t');
+                    $activation_url .= '?username=' . $request['username'];
+                    $activation_url .= '&purchase_code=' . $request['purchase_key'];
+                    $activation_url .= '&domain=' . substr(\Request::root(), 7) .'&';
+
+                    return $activation_url;
                 }
             } catch (\Exception $exception) {info($exception);}
         }

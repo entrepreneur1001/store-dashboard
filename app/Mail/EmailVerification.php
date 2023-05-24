@@ -18,7 +18,7 @@ class EmailVerification extends Mailable
      */
     protected $token;
 
-    public function __construct($token)
+    public function __construct($token = '')
     {
         $this->token = $token;
     }

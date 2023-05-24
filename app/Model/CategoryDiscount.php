@@ -22,7 +22,7 @@ class CategoryDiscount extends Model
         'discount_amount' => 'float',
     ];
 
-    public function category()
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id', 'id');
     }

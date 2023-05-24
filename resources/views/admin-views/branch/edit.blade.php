@@ -22,7 +22,7 @@
         <div class="page-header">
             <h1 class="page-header-title">
                 <span class="page-header-icon">
-                    <img src="{{asset('public/assets/admin/img/edit.png')}}" class="w--24" alt="">
+                    <img src="{{asset('public/assets/admin/img/add_branch.png')}}" class="w--24" alt="">
                 </span>
                 <span>
                     {{\App\CentralLogics\translate('branch')}} {{\App\CentralLogics\translate('update')}}
@@ -123,26 +123,26 @@
                                             <div class="form-group mb-0">
                                                 <label class="form-label text-capitalize"
                                                        for="latitude">{{ translate('latitude') }}<span
-                                                        class="form-label-secondary" data-toggle="tooltip" data-placement="right"
-                                                        data-original-title="{{ translate('click_on_the_map_select_your_defaul_location') }}"><img
+                                                        class="form-label-secondary pl-1" data-toggle="tooltip" data-placement="right"
+                                                        data-original-title="{{ translate('click_on_the_map_select_your_default_location') }}"><img
                                                             src="{{ asset('/public/assets/admin/img/info-circle.svg') }}"
-                                                            alt="{{ translate('click_on_the_map_select_your_defaul_location') }}"></span></label>
+                                                            alt="{{ translate('click_on_the_map_select_your_default_location') }}"></span></label>
                                                 <input type="text" id="latitude" name="latitude" class="form-control"
                                                        placeholder="{{ translate('Ex:') }} 23.8118428"
-                                                       value="{{$branch['latitude']}}" required>
+                                                       value="{{$branch['latitude']}}" required readonly>
                                             </div>
                                         </div>
                                         <div class="col-12">
                                             <div class="form-group mb-0">
                                                 <label class="form-label text-capitalize"
                                                 for="longitude">{{ translate('longitude') }}<span
-                                                    class="form-label-secondary" data-toggle="tooltip" data-placement="right"
-                                                    data-original-title="{{ translate('messages.click_on_the_map_select_your_defaul_location') }}"><img
+                                                    class="form-label-secondary pl-1" data-toggle="tooltip" data-placement="right"
+                                                    data-original-title="{{ translate('messages.click_on_the_map_select_your_default_location') }}"><img
                                                         src="{{ asset('/public/assets/admin/img/info-circle.svg') }}"
-                                                        alt="{{ translate('click_on_the_map_select_your_defaul_location') }}"></span></label>
+                                                        alt="{{ translate('click_on_the_map_select_your_default_location') }}"></span></label>
                                                 <input type="text" name="longitude" class="form-control"
                                                        placeholder="{{ translate('Ex:') }} 90.356331" id="longitude"
-                                                       value="{{$branch['longitude']}}" required>
+                                                       value="{{$branch['longitude']}}" required readonly>
                                             </div>
                                         </div>
                                         <div class="col-12">
@@ -155,7 +155,7 @@
                                                     {{\App\CentralLogics\translate('coverage')}} ( {{\App\CentralLogics\translate('km')}} )
                                                 </label>
                                                 <input type="number" name="coverage" min="1" value="{{$branch['coverage']}}" max="1000" class="form-control" placeholder="{{ translate('Ex : 3') }}"
-                                                    {{$branch_count>1?'required':''}}>
+                                                    {{$branch_count>1?'required':''}} >
                                             </div>
                                         </div>
                                     </div>
@@ -184,7 +184,7 @@
 @push('script_2')
 
 <!-- Maps -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ \App\Model\BusinessSetting::where('key', 'map_api_key')->first()->value }}&libraries=places&v=3.45.8"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ \App\Model\BusinessSetting::where('key', 'map_api_client_key')->first()?->value }}&libraries=places&v=3.45.8"></script>
 
     <script>
         function readURL(input) {

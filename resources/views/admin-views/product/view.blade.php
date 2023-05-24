@@ -72,7 +72,7 @@
                                 <!-- Review Ratings -->
                                     <li class="d-flex align-items-center font-size-sm">
                                         @php($five=\App\CentralLogics\Helpers::rating_count($product['id'],5))
-                                        <span class="progress-name mr-3">{{translate('excellent_')}}</span>
+                                        <span class="progress-name mr-3">{{translate('excellent')}}</span>
                                         <div class="progress flex-grow-1">
                                             <div class="progress-bar" role="progressbar"
                                                     style="width: {{$total==0?0:($five/$total)*100}}%;"
@@ -176,6 +176,7 @@
                                 <th class="px-4 border-0"><h4 class="m-0 text-capitalize">{{translate('short_description')}}</h4></th>
                                 <th class="px-4 border-0"><h4 class="m-0 text-capitalize">{{translate('price')}}</h4></th>
                                 <th class="px-4 border-0"><h4 class="m-0 text-capitalize">{{translate('variations')}}</h4></th>
+                                <th class="px-4 border-0"><h4 class="m-0 text-capitalize">{{translate('Tags')}}</h4></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -204,6 +205,11 @@
                                         <div class="text-capitalize">
                                             {{$variation['type']}} : {{ Helpers::set_symbol($variation['price']) }}
                                         </div>
+                                    @endforeach
+                                </td>
+                                <td>
+                                    @foreach($product->tags as $tag)
+                                        <span class="badge-soft-success mb-1 mr-1 d-inline-block px-2 py-1 rounded" >{{$tag->tag}} </span> <br>
                                     @endforeach
                                 </td>
                             </tr>
@@ -298,7 +304,7 @@
                                 <td>
                                     <label class="toggle-switch">
                                         <input type="checkbox"
-                                               onclick="status_change_alert('{{ route('admin.reviews.status', [$review->id, $review->is_active ? 0 : 1]) }}', '{{ $review->is_active? translate('you_want_to_disable_this_review'): translate('you_want_to_active_this_review') }}', event)"
+                                               onclick="status_change_alert('{{ route('admin.reviews.status', [$review->id, $review->is_active ? 0 : 1]) }}', '{{ $review->is_active? translate('you want to disable this review'): translate('you want to active this review') }}', event)"
                                                class="toggle-switch-input" id="stocksCheckbox{{ $review->id }}"
                                             {{ $review->is_active ? 'checked' : '' }}>
                                         <span class="toggle-switch-label text">

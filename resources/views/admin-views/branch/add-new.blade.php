@@ -22,7 +22,7 @@
         <div class="page-header">
             <h1 class="page-header-title">
                 <span class="page-header-icon">
-                    <img src="{{asset('public/assets/admin/img/banner.png')}}" class="w--20" alt="">
+                    <img src="{{asset('public/assets/admin/img/add_branch.png')}}" class="w--20" alt="">
                 </span>
                 <span>
                     {{translate('add New Branch')}}
@@ -123,38 +123,41 @@
                                             <div class="row g-3">
                                                 <div class="col-12">
                                                     <div class="form-group mb-0">
-                                                        <label class="form-label text-capitalize"
-                                                               for="latitude">{{ translate('latitude') }}<span
-                                                                class="form-label-secondary" data-toggle="tooltip" data-placement="right"
-                                                                data-original-title="{{ translate('click_on_the_map_select_your_defaul_location') }}"><img
-                                                                    src="{{ asset('/public/assets/admin/img/info-circle.svg') }}"
-                                                                    alt="{{ translate('click_on_the_map_select_your_defaul_location') }}"></span></label>
+                                                        <label class="form-label text-capitalize" for="latitude">{{ translate('latitude') }}
+                                                            <i class="tio-info-outined"
+                                                               data-toggle="tooltip"
+                                                               data-placement="top"
+                                                               title="{{ translate('click_on_the_map_select_your_default_location') }}">
+                                                            </i>
+                                                        </label>
                                                         <input type="text" id="latitude" name="latitude" class="form-control"
                                                                placeholder="{{ translate('Ex:') }} 23.8118428"
-                                                               value="{{ old('latitude') }}" required >
+                                                               value="{{ old('latitude') }}" required readonly>
                                                     </div>
                                                 </div>
                                                 <div class="col-12">
                                                     <div class="form-group mb-0">
-                                                        <label class="form-label text-capitalize"
-                                                               for="longitude">{{ translate('longitude') }}<span
-                                                                class="form-label-secondary" data-toggle="tooltip" data-placement="right"
-                                                                data-original-title="{{ translate('click_on_the_map_select_your_defaul_location') }}"><img
-                                                                    src="{{ asset('/public/assets/admin/img/info-circle.svg') }}"
-                                                                    alt="{{ translate('click_on_the_map_select_your_defaul_location') }}"></span></label>
-                                                        <input type="text" name="longitude" class="form-control"
+                                                        <label class="form-label text-capitalize" for="longitude">{{ translate('longitude') }}
+                                                            <i class="tio-info-outined"
+                                                               data-toggle="tooltip"
+                                                               data-placement="top"
+                                                               title="{{ translate('click_on_the_map_select_your_default_location') }}">
+                                                            </i>
+                                                        </label>
+                                                        <input type="text" step="0.1" name="longitude" class="form-control"
                                                                placeholder="{{ translate('Ex:') }} 90.356331" id="longitude"
-                                                               value="{{ old('longitude') }}" required>
+                                                               value="{{ old('longitude') }}" required readonly>
                                                     </div>
                                                 </div>
                                                 <div class="col-12">
                                                     <div class="form-group mb-0">
                                                         <label class="input-label">
+                                                            {{translate('coverage (km)')}}
                                                             <i class="tio-info-outined"
                                                                data-toggle="tooltip"
                                                                data-placement="top"
-                                                               title="{{ translate('This value is the radius from your restaurant location, and customer can order food inside  the circle calculated by this radius.') }}"></i>
-                                                            {{translate('coverage (km)')}}
+                                                               title="{{ translate('This value is the radius from your branch location, and customer can order inside  the circle calculated by this radius. The coverage area value must be less or equal than 1000.') }}">
+                                                            </i>
                                                         </label>
                                                         <input type="number" name="coverage" min="1" max="1000" class="form-control" placeholder="{{ translate('Ex : 3') }}" value="{{ old('coverage') }}" required>
                                                     </div>
@@ -187,7 +190,7 @@
 
 @push('script_2')
 
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ \App\Model\BusinessSetting::where('key', 'map_api_key')->first()->value }}&libraries=places&v=3.45.8"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ \App\Model\BusinessSetting::where('key', 'map_api_client_key')->first()?->value }}&libraries=places&v=3.45.8"></script>
 
     <script>
         function readURL(input) {

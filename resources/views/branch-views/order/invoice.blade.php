@@ -1,6 +1,6 @@
 @extends('layouts.branch.app')
 
-@section('title','')
+@section('title', translate('invoice'))
 
 @section('content')
 
@@ -16,7 +16,7 @@
             </div>
             <div class="initial-38-1">
                 <div class="pt-3">
-                    <img src="{{asset('/public/assets/admin/img/restaurant-invoice.png')}}" class="initial-38-2" alt="">
+                    <img src="{{asset('/public/assets/admin/img/food.png')}}" class="initial-38-2" alt="">
                 </div>
                 <div class="text-center pt-2 mb-3">
                     <h2  class="initial-38-3">{{ $order->branch->name }}</h2>
@@ -86,6 +86,8 @@
                     @php($sub_total=0)
                     @php($total_tax=0)
                     @php($total_dis_on_pro=0)
+                    @php($updated_total_tax=0)
+                    @php($vat_status = '')
                     @foreach($order->details as $detail)
 
                         @if($detail->product_details !=null)
@@ -118,41 +120,10 @@
 
                             @php($sub_total+=$amount)
                             @php($total_tax+=$detail['tax_amount']*$detail['quantity'])
+                            @php($updated_total_tax+= $detail['vat_status'] === 'included' ? 0 : $detail['tax_amount']*$detail['quantity'])
+                            @php($vat_status = $detail['vat_status'])
                         @endif
 
-
-
-
-                       {{-- @if($detail->product)
-                            <tr>
-                                <td class="">
-                                    {{$detail['quantity']}}
-                                </td>
-                                <td class="">
-                                    {{$detail->product['name']}} <br>
-                                    @if(count(json_decode($detail['variation'],true))>0)
-                                        <strong><u>Variation : </u></strong>
-                                        @foreach(json_decode($detail['variation'],true)[0] ?? json_decode($detail['variation'],true) as $key1 =>$variation)
-                                            <div class="font-size-sm text-body">
-                                                @if($variation != null)
-                                                <span class="text-capitalize">{{$key1}} :  </span>
-                                                <span class="font-weight-bold">{{$variation}} {{$key1=='price'?\App\CentralLogics\Helpers::currency_symbol():''}}</span>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    @endif
-                                    <span>{{ translate('Unit Price') }} : {{ Helpers::set_symbol($detail['price']) }}</span><br>
-                                    <span>{{ translate('Qty') }} : {{ $detail['quantity']}}</span><br>
-                                    <span>{{ translate('Discount') }} : {{ Helpers::set_symbol($detail['discount_on_product']) }}</span>
-                                </td>
-                                    <td class="w-28p">
-                                    @php($amount=($detail['price']-$detail['discount_on_product'])*$detail['quantity'])
-                                    {{ Helpers::set_symbol($amount) }}
-                                </td>
-                            </tr>
-                            @php($sub_total+=$amount)
-                            @php($total_tax+=$detail['tax_amount']*$detail['quantity'])
-                        @endif--}}
                     @endforeach
                     </tbody>
                 </table>
@@ -160,12 +131,12 @@
                     <dl class="row text-right justify-content-center">
                         <dt class="col-6">{{ translate('Items Price') }}:</dt>
                         <dd class="col-6">{{ Helpers::set_symbol($sub_total) }}</dd>
-                        <dt class="col-6">{{ translate('Tax / VAT') }}:</dt>
+                        <dt class="col-6">{{translate('Tax / VAT')}} {{ $vat_status == 'included' ? translate('(included)') : '' }}:</dt>
                         <dd class="col-6">{{ Helpers::set_symbol($total_tax) }}</dd>
 
                         <dt class="col-6">{{ translate('Subtotal') }}:</dt>
                         <dd class="col-6">
-                            {{ Helpers::set_symbol($sub_total+$total_tax) }}</dd>
+                            {{ Helpers::set_symbol($sub_total+$updated_total_tax) }}</dd>
                         <dt class="col-6">{{ translate('Coupon Discount') }}:</dt>
                         <dd class="col-6">
                             - {{ Helpers::set_symbol($order['coupon_discount_amount']) }}</dd>
@@ -186,7 +157,7 @@
                         </dd>
 
                         <dt class="col-6 font-20px">{{ translate('Total') }}:</dt>
-                        <dd class="col-6 font-20px">{{ Helpers::set_symbol($sub_total+$del_c+$total_tax-$order['coupon_discount_amount']-$order['extra_discount']) }}</dd>
+                        <dd class="col-6 font-20px">{{ Helpers::set_symbol($sub_total+$del_c+$updated_total_tax-$order['coupon_discount_amount']-$order['extra_discount']) }}</dd>
                     </dl>
                     <span class="initial-38-5">---------------------------------------------------------------------------------</span>
                     <h5 class="text-center pt-1">

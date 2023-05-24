@@ -16,7 +16,7 @@
                 <img src="{{asset('public/assets/admin/img/employee.png')}}" class="w--24" alt="mail">
             </span>
             <span>
-                {{translate('Employee List')}}<span class="badge badge-soft-primary ml-2">{{count($em)}}</span>
+                {{translate('Employee List')}}<span class="badge badge-soft-primary ml-2">{{$em->total()}}</span>
             </span>
         </h1>
     </div>
@@ -82,7 +82,7 @@
                     @foreach($em as $k=>$e)
                     @if($e->role)
                         <tr>
-                            <td>{{$loop->iteration}}</td>
+                            <td>{{$em->firstItem()+$k}}</td>
                             <td class="text-capitalize">
                                 <div class="table--media">
                                     <img class="rounded-full"

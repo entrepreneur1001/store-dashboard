@@ -12,13 +12,12 @@
         <div class="page-header">
             <div class="media align-items-center mb-2">
                 <!-- Avatar -->
-                <div class="avatar avatar-lg mr-3">
-                    <img class="avatar-img" src="{{asset('public/assets/admin')}}/svg/illustrations/earnings.png"
-                         alt="Image Description">
+                <div class="">
+                    <img src="{{asset('public/assets/admin/img/image-4.png')}}" class="w--20" alt="">
                 </div>
                 <!-- End Avatar -->
 
-                <div class="media-body">
+                <div class="media-body pl-3">
                     <div class="row">
                         <div class="col-lg mb-3 mb-lg-0 text-capitalize">
                             <h1 class="page-header-title">{{translate('earning')}} {{translate('report')}} {{translate('overview')}}</h1>
@@ -57,7 +56,7 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <div>
-                                <label class="form-label mb-0 font-semibold">{{translate('show')}} {{translate('data')}} by {{translate('date')}}
+                                <label class="form-label mb-0 font-semibold">{{translate('show')}} {{translate('data')}} {{translate('by')}} {{translate('date')}}
                                     {{translate('range')}}</label>
                             </div>
                         </div>

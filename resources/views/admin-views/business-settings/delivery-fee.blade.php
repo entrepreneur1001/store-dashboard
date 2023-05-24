@@ -45,6 +45,28 @@
                                         </label>
                                     </div>
                                 </div>
+                                <div class="col-md-6 col-sm-6 pt-5">
+                                    <?php
+                                    $free_delivery_status=\App\CentralLogics\Helpers::get_business_settings('free_delivery_over_amount_status');
+                                    $d_status = $free_delivery_status == 1 ? 0 : 1;
+                                    ?>
+                                    <div class="form-group">
+                                        <label class="toggle-switch h--45px toggle-switch-sm d-flex justify-content-between border rounded px-3 py-0 form-control"
+                                               onclick="free_delivery_over_amount_status('{{route('admin.business-settings.store.free-delivery-status',[$d_status])}}')">
+                                            <span class="pr-1 d-flex align-items-center switch--label">
+                                                <span class="line--limit-1">
+                                                    <strong>{{translate('free_delivery_over_amount_status')}}</strong>
+                                                </span>
+                                                <span class="form-label-secondary text-danger d-flex ml-1" data-toggle="tooltip" data-placement="right" data-original-title="{{translate('If this field is active and the order amount exceeds this free delivery over amount then the delivery fee will be free.')}}"><img src="{{asset('public/assets/admin/img/info-circle.svg')}}" alt="info">
+                                                </span>
+                                            </span>
+                                            <input type="checkbox" class="toggle-switch-input" name="free_delivery_status" {{ $free_delivery_status == 1 ? 'checked' : '' }}>
+                                            <span class="toggle-switch-label text">
+                                                <span class="toggle-switch-indicator"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div class="col-12 mt-4">
                                     <div class="row g-3">
                                         <div class="col-sm-6">
@@ -71,6 +93,23 @@
                                     <label class="" for="exampleFormControlInput1">{{translate('default_delivery_charge')}} <span>({{ \App\CentralLogics\Helpers::currency_symbol() }})</span></label>
                                     <input type="number" min="0" step=".01" name="delivery_charge" value="{{$delivery}}" class="form-control" placeholder="EX: 100" required
                                            {{ $config['status']==1?'disabled':'' }} id="delivery_charge">
+                                </div>
+
+                                @php($free_delivery_over_amount=\App\CentralLogics\Helpers::get_business_settings('free_delivery_over_amount'))
+                                <div class="col-md-6 col-sm-6 mt-4">
+                                    <div class="form-group mb-0">
+                                        <label class="">
+                                            {{translate('free_delivery_over_amount')}}
+                                            <span>({{ \App\CentralLogics\Helpers::currency_symbol() }})</span>
+                                            <i class="tio-info-outined"
+                                               data-toggle="tooltip"
+                                               data-placement="top"
+                                               title="{{ translate('If the order amount exceeds this amount the delivery fee will be free.') }}"></i>
+
+                                        </label>
+                                        <input type="number" value="{{$free_delivery_over_amount}}" name="free_delivery_over_amount" class="form-control" placeholder=""
+                                               {{ $free_delivery_status == 0 ? 'readonly' : '' }} required>
+                                    </div>
                                 </div>
                             </div>
                             <div class="btn--container mt-4 justify-content-end">
@@ -99,6 +138,32 @@
             $('#min_shipping_charge').prop('disabled', true);
             $('#shipping_per_km').prop('disabled', true);
         });
+
+        function free_delivery_over_amount_status(route) {
+
+            $.get({
+                url: route,
+                contentType: false,
+                processData: false,
+                beforeSend: function () {
+                    $('#loading').show();
+                },
+                success: function (data) {
+                    setTimeout(function () {
+                        location.reload(true);
+                    }, 1000);
+                    if (data.status == 1) {
+                        toastr.success(data.message);
+                    } else {
+                        toastr.warning(data.message);
+                    }
+
+                },
+                complete: function () {
+                    $('#loading').hide();
+                },
+            });
+        }
     </script>
 
 @endpush

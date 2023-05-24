@@ -21,4 +21,9 @@ class Coupon extends Model
     {
         return $query->where(['status' => 1])->where('start_date', '<=', now()->format('Y-m-d'))->where('expire_date', '>=', now()->format('Y-m-d'));
     }
+
+    public function order(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Order::class, 'coupon_code', 'code');
+    }
 }

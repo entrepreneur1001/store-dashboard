@@ -86,11 +86,14 @@ Route::get('/paystack',function (){
 //bkash
 Route::group(['prefix'=>'bkash'], function () {
     // Payment Routes for bKash
-    Route::post('get-token', 'BkashPaymentController@getToken')->name('bkash-get-token');
-    Route::post('create-payment', 'BkashPaymentController@createPayment')->name('bkash-create-payment');
-    Route::post('execute-payment', 'BkashPaymentController@executePayment')->name('bkash-execute-payment');
-    Route::get('query-payment', 'BkashPaymentController@queryPayment')->name('bkash-query-payment');
-    Route::post('success', 'BkashPaymentController@bkashSuccess')->name('bkash-success');
+//    Route::post('get-token', 'BkashPaymentController@getToken')->name('bkash-get-token');
+//    Route::post('create-payment', 'BkashPaymentController@createPayment')->name('bkash-create-payment');
+//    Route::post('execute-payment', 'BkashPaymentController@executePayment')->name('bkash-execute-payment');
+//    Route::get('query-payment', 'BkashPaymentController@queryPayment')->name('bkash-query-payment');
+//    Route::post('success', 'BkashPaymentController@bkashSuccess')->name('bkash-success');
+
+    Route::get('make-payment', 'BkashPaymentController@make_tokenize_payment')->name('bkash.make-payment');
+    Route::any('callback', 'BkashPaymentController@callback')->name('bkash.callback');
 
     // Refund Routes for bKash
     Route::get('refund', 'BkashRefundController@index')->name('bkash-refund');
@@ -131,3 +134,6 @@ Route::get('/test', function () {
     \App\CentralLogics\Helpers::setEnvironmentValue('fff','123');
     return 0;
 });
+
+Route::any('6cash/make-payment', 'SixCashPaymentController@make_payment')->name('6cash.make-payment');
+Route::any('6cash/callback','SixCashPaymentController@callback')->name('6cash.callback');

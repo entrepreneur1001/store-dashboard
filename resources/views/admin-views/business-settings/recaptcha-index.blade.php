@@ -59,30 +59,30 @@
                                 </div>
                             </div>
                         </div>
-                        <h5>Instructions</h5>
+                        <h5>{{ translate('Instructions') }}</h5>
                         <ol class="pl-3">
-                            <li class="mb-1">{{translate('To  get site key and secret keyGo to the Credentials page')}} <a
+                            <li class="mb-1">{{ translate('To  get site key and secret keyGo to the Credentials page') }} <a
                                     href="https://www.google.com/recaptcha/admin/create" class="text--base"
                                     target="_blank">{{translate('(Click Here)')}}</a>)
                             </li>
-                            <li class="mb-1">{{translate('Add a Label (Ex: abc company)')}}
+                            <li class="mb-1">{{ translate('Add a Label (Ex: abc company)' )}}
                             </li>
                             <li class="mb-1">
-                                {{translate('Select reCAPTCHA v2  as  ReCAPTCHA Type')}}
+                                {{ translate('Select reCAPTCHA v2  as  ReCAPTCHA Type') }}
                             </li>
                             <li class="mb-1">
-                                {{translate('Select Sub type: I m not a robot Checkbox')}}
+                                {{ translate('Select Sub type: I m not a robot Checkbox') }}
                             </li>
                             <li class="mb-1">
-                                {{translate('Add Domain (For ex: demo.6amtech.com)')}}
+                                {{ translate('Add Domain (For ex: demo.6amtech.com)') }}
                             </li>
                             <li class="mb-1">
-                                {{translate('Check in “Accept the reCAPTCHA Terms of Service”')}}
+                                {{ translate('Check in “Accept the reCAPTCHA Terms of Service”') }}
                             </li>
                             <li class="mb-1">
-                                {{translate('Press Submit')}}
+                                {{ translate('Press Submit') }}
                             </li>
-                            <li class="mb-1">{{translate('Copy Site Key and Secret Key, Paste in the input filed below and Save.')}}
+                            <li class="mb-1">{{ translate('Copy Site Key and Secret Key, Paste in the input filed below and Save.') }}
                             </li>
                         </ol>
 

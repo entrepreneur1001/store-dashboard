@@ -21,7 +21,7 @@
                 <div class="btn--container justify-content-between align-items-center mb-2 pb-1">
                     <h5 class="card-title mb-2">
                         <img src="{{asset('/public/assets/admin/img/business-analytics.png')}}" alt="" class="card-icon">
-                        <span>{{translate('business_analytics')}}</span>
+                        <span>{{ translate('business_analytics')}}</span>
                     </h5>
                     <div class="mb-2">
                         <select class="custom-select" name="statistics_type" onchange="order_stats_update(this.value)">
@@ -317,7 +317,7 @@
 
     var options = {
         series: [{
-            name: "Orders",
+            name: "{{ translate('Orders') }}",
             data: [
                 {{$order_statistics_chart[1]}}, {{$order_statistics_chart[2]}}, {{$order_statistics_chart[3]}}, {{$order_statistics_chart[4]}},
                 {{$order_statistics_chart[5]}}, {{$order_statistics_chart[6]}}, {{$order_statistics_chart[7]}}, {{$order_statistics_chart[8]}},
@@ -428,7 +428,7 @@
     },
     colors: ['#87bcbf', '#107980'],
     series: [{
-        name: "Earning",
+        name: "{{ translate('Earning') }}",
         data: [{{$earning[1]}},{{$earning[2]}},{{$earning[3]}},{{$earning[4]}},{{$earning[5]}},{{$earning[6]}},{{$earning[7]}},{{$earning[8]}},{{$earning[9]}},{{$earning[10]}},{{$earning[11]}},{{$earning[12]}}],
         },
     ],
@@ -535,7 +535,7 @@
 
                 var options = {
                     series: [{
-                        name: "Orders",
+                        name: "{{ translate('Orders') }}",
                         data: response_data.orders,
                     }],
                     chart: {
@@ -624,7 +624,7 @@
                     },
                     colors: ['#87bcbf', '#107980'],
                     series: [{
-                        name: "Earning",
+                        name: "{{ translate('Earning') }}",
                         data: response_data.earning,
                     }],
                     markers: {

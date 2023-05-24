@@ -106,6 +106,7 @@
                                 <th>{{translate('selling_price')}}</th>
                                 <th class="text-center">{{translate('total_sale')}}</th>
                                 <th class="text-center">{{translate('show_in_daily_needs')}}</th>
+                                <th class="text-center">{{translate('featured')}}</th>
                                 <th class="text-center">{{translate('status')}}</th>
                                 <th class="text-center">{{translate('action')}}</th>
                             </tr>
@@ -149,7 +150,18 @@
                                     <td class="pt-1 pb-3  {{$key == 0 ? 'pt-4' : '' }}">
                                         <label class="toggle-switch my-0">
                                             <input type="checkbox"
-                                                onclick="status_change_alert('{{ route('admin.product.status', [$product->id, $product->status ? 0 : 1]) }}', '{{ $product->status? translate('you_want_to_disable_this_product'): translate('you_want_to_active_this_product') }}', event)"
+                                                   onclick="featured_status_change_alert('{{ route('admin.product.feature', [$product->id, $product->is_featured ? 0 : 1]) }}', '{{ $product->is_featured? translate('want to remove from featured product'): translate('want to add in featured product') }}', event)"
+                                                   class="toggle-switch-input" id="stocksCheckbox{{ $product->id }}"
+                                                {{ $product->is_featured ? 'checked' : '' }}>
+                                            <span class="toggle-switch-label mx-auto text">
+                                                <span class="toggle-switch-indicator"></span>
+                                            </span>
+                                        </label>
+                                    </td>
+                                    <td class="pt-1 pb-3  {{$key == 0 ? 'pt-4' : '' }}">
+                                        <label class="toggle-switch my-0">
+                                            <input type="checkbox"
+                                                onclick="status_change_alert('{{ route('admin.product.status', [$product->id, $product->status ? 0 : 1]) }}', '{{ $product->status? translate('you want to disable this product'): translate('you want to active this product') }}', event)"
                                                 class="toggle-switch-input" id="stocksCheckbox{{ $product->id }}"
                                                 {{ $product->status ? 'checked' : '' }}>
                                             <span class="toggle-switch-label mx-auto text">
@@ -207,14 +219,14 @@
         function status_change_alert(url, message, e) {
             e.preventDefault();
             Swal.fire({
-                title: 'Are you sure?',
+                title: '{{ translate("Are you sure?") }}',
                 text: message,
                 type: 'warning',
                 showCancelButton: true,
                 cancelButtonColor: 'default',
                 confirmButtonColor: '#107980',
-                cancelButtonText: 'No',
-                confirmButtonText: 'Yes',
+                cancelButtonText: '{{ translate("No") }}',
+                confirmButtonText: '{{ translate("Yes") }}',
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
@@ -222,6 +234,27 @@
                 }
             })
         }
+</script>
+
+<script>
+    function featured_status_change_alert(url, message, e) {
+        e.preventDefault();
+        Swal.fire({
+            title: '{{ translate("Are you sure?") }}',
+            text: message,
+            type: 'warning',
+            showCancelButton: true,
+            cancelButtonColor: 'default',
+            confirmButtonColor: '#107980',
+            cancelButtonText: '{{ translate("No") }}',
+            confirmButtonText: '{{ translate("Yes") }}',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.value) {
+                location.href = url;
+            }
+        })
+    }
 </script>
     <script>
         $('#search-form').on('submit', function () {

@@ -188,13 +188,13 @@
                                 </div>
                                 <!-- End Search -->
                             </form>
-                            <div>
-                                <a href="{{ route('admin.report.expense.export.pdf', ['date_type'=>request('date_type'), 'start_date'=>request('start_date'), 'end_date'=>request('end_date')]) }}"
-                                   class="btn btn-outline--primary text-nowrap btn-block">
-                                    <i class="tio-file-text"></i>
-                                    {{translate('Download PDF')}}
-                                </a>
-                            </div>
+{{--                            <div>--}}
+{{--                                <a href="{{ route('admin.report.expense.export.pdf', ['date_type'=>request('date_type'), 'start_date'=>request('start_date'), 'end_date'=>request('end_date')]) }}"--}}
+{{--                                   class="btn btn-outline--primary text-nowrap btn-block">--}}
+{{--                                    <i class="tio-file-text"></i>--}}
+{{--                                    {{translate('Download PDF')}}--}}
+{{--                                </a>--}}
+{{--                            </div>--}}
                             <div>
                                 <button type="button" class="btn btn-outline--primary text-nowrap btn-block"
                                         data-toggle="dropdown">

@@ -19,9 +19,10 @@ class Product extends Model
         'set_menu'    => 'integer',
         'created_at'  => 'datetime',
         'updated_at'  => 'datetime',
+        'is_featured'  => 'integer',
     ];
 
-    public function translations()
+    public function translations(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany('App\Model\Translation', 'translationable');
     }
@@ -31,22 +32,22 @@ class Product extends Model
         return $query->where('status', '=', 1);
     }
 
-    public function reviews()
+    public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Review::class)->latest();
     }
 
-    public function active_reviews()
+    public function active_reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Review::class)->where(['is_active' => 1])->latest();
     }
 
-    public function wishlist()
+    public function wishlist(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Wishlist::class)->latest();
     }
 
-    public function rating()
+    public function rating(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Review::class)
             ->where('is_active', 1)
@@ -54,14 +55,14 @@ class Product extends Model
             ->groupBy('product_id');
     }
 
-    public function all_rating()
+    public function all_rating(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Review::class)
             ->select(DB::raw('avg(rating) average, product_id'))
             ->groupBy('product_id');
     }
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::addGlobalScope('translate', function (Builder $builder) {
             $builder->with(['translations' => function($query){
@@ -70,11 +71,15 @@ class Product extends Model
         });
     }
 
-    public function order_details()
+    public function order_details(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(OrderDetail::class);
     }
 
+    public function tags(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
+    }
 
 
 }

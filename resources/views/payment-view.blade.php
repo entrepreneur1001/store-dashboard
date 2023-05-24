@@ -50,7 +50,7 @@
 </div>
 {{--loader--}}
 <!-- Page Content-->
-<div class="container pb-5 mb-2 mb-md-4">
+<div class="container pb-5 mb-2 mb-md-4" style="display: none">
     <div class="row">
         <div class="col-md-12 mb-5 pt-5">
             <center class="">
@@ -72,7 +72,7 @@
                                     <form action="{!! route('pay-ssl',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}" method="POST" class="needs-validation"
                                           id="ssl-form">
                                         <input type="hidden" value="{{ csrf_token() }}" name="_token"/>
-                                        <button class="btn btn-block click-if-alone" type="submit">
+                                        <button class="btn btn-block click-if-alone" type="submit" id="sslcomz-button">
                                             <img width="100"
                                                  src="{{asset('public/assets/admin/img/sslcomz.png')}}"/>
                                         </button>
@@ -103,7 +103,7 @@
                                                 data-theme.color="#ff7529">
                                         </script>
                                     </form>
-                                    <button class="btn btn-block click-if-alone" type="button"
+                                    <button class="btn btn-block click-if-alone" type="button" id="razorpay-button"
                                             onclick="{{\App\CentralLogics\Helpers::currency_code()=='INR'?"$('.razorpay-payment-button').click()":"toastr.error('Your currency is not supported by Razor Pay.')"}}">
                                         <img width="100"
                                              src="{{asset('public/assets/admin/img/razorpay.png')}}"/>
@@ -122,7 +122,7 @@
                                     <form class="needs-validation" method="POST" id="payment-form"
                                           action="{!! route('pay-paypal',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}">
                                         {{ csrf_field() }}
-                                        <button class="btn btn-block click-if-alone" type="submit">
+                                        <button class="btn btn-block click-if-alone" type="submit" id="paypal-button">
                                             <img width="100"
                                                  src="{{asset('public/assets/admin/img/paypal.png')}}"/>
                                         </button>
@@ -199,7 +199,7 @@
                                                        value="{{ $reff }}"> {{-- required --}}
                                                 <p>
                                                     <button class="paystack-payment-button click-if-alone" style="display: none"
-                                                            type="submit"
+                                                            type="submit" id="paystack-payment-button"
                                                             value="Pay Now!"></button>
                                                 </p>
                                             </div>
@@ -242,7 +242,7 @@
                                         <input type="hidden" name="hash" value="{{$data->hashed_string}}">
                                     </form>
 
-                                    <button class="btn btn-block click-if-alone" type="button"
+                                    <button class="btn btn-block click-if-alone" type="button"  id="senangpay-button"
                                             onclick="{{\App\CentralLogics\Helpers::currency_code()=='MYR'?"document.order.submit()":"toastr.error('Your currency is not supported by Senang Pay.')"}}">
                                         <img width="100"
                                              src="{{asset('public/assets/admin/img/senangpay.png')}}"/>
@@ -273,7 +273,7 @@
                                     <form class="needs-validation" method="POST" id="payment-form-paymob"
                                           action="{!! route('paymob-credit',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}">
                                         {{ csrf_field() }}
-                                        <button class="btn btn-block click-if-alone">
+                                        <button class="btn btn-block click-if-alone" id="paymob-button">>
                                             <img width="100" src="{{asset('public/assets/admin/img/paymob.png')}}"/>
                                         </button>
                                     </form>
@@ -287,7 +287,8 @@
                         <div class="col-md-6 mb-4" style="cursor: pointer">
                             <div class="card">
                                 <div class="card-body pt-2" style="height: 70px">
-                                    <button class="btn btn-block click-if-alone" onclick="location.href='{!! route('mercadopago.index',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}'">
+                                    <button class="btn btn-block click-if-alone" id="mercadopago-button"
+                                            onclick="location.href='{!! route('mercadopago.index',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}'">
                                         <img width="150"
                                              src="{{asset('public/assets/admin/img/MercadoPago_(Horizontal).svg')}}"/>
                                     </button>
@@ -304,9 +305,26 @@
                                     <form method="POST" action="{!! route('flutterwave_pay',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}">
                                         {{ csrf_field() }}
 
-                                        <button class="btn btn-block click-if-alone" type="submit">
+                                        <button class="btn btn-block click-if-alone" type="submit" id="fluterwave-button">
                                             <img width="200"
                                                  src="{{asset('public/assets/admin/img/fluterwave.png')}}"/>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @php($config=\App\CentralLogics\Helpers::get_business_settings('6cash'))
+                    @if(isset($config) && $config['status'])
+                        <div class="col-md-6 mb-4" style="cursor: pointer">
+                            <div class="card">
+                                <div class="card-body pt-2" style="height: 70px">
+                                    <form method="POST" action="{!! route('6cash.make-payment',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}">
+                                        {{ csrf_field() }}
+                                        <button class="btn btn-block click-if-alone" type="submit" id="6cash-button">
+                                            <img width="200"
+                                                 src="{{asset('public/assets/admin/img/6cash.png')}}"/>
                                         </button>
                                     </form>
                                 </div>
@@ -363,7 +381,7 @@
                                             <form action="{!! route('internal-point-pay',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}" method="POST">
                                                 @csrf
                                                 <input name="order_id" value="" style="display: none">
-                                                <button type="submit" class="btn btn-primary">{{ translate('Proceed') }}</button>
+                                                <button type="submit" class="btn btn-primary" id="internal-point-pay-button">{{ translate('Proceed') }}</button>
                                             </form>
                                         @else
                                             <button type="button" class="btn btn-primary">{{ translate('Sorry! Next time.') }}</button>
@@ -393,142 +411,184 @@
     }, 10)
 </script>
 
+<script>
+    $(document).ready(function (){
+        let payment_method = "{{$payment_method}}"
+
+        if (payment_method ==='ssl_commerz_payment') {
+            $('#sslcomz-button').click();
+        } else if (payment_method === 'razor_pay') {
+            $('#razorpay-button').click();
+        } else if (payment_method === 'paypal') {
+            $('#paypal-button').click();
+        } else if (payment_method === 'stripe') {
+            $('#checkout-button').click();
+        } else if (payment_method === 'senang_pay') {
+            $('#senangpay-button').click();
+        } else if (payment_method === 'paystack') {
+            $('#paystack-payment-button').click();
+        } else if (payment_method === 'bkash') {
+            $('#bKash_button').click();
+        } else if (payment_method === 'paymob') {
+            $('#paymob-button').click();
+        } else if (payment_method === 'flutterwave') {
+            $('#fluterwave-button').click();
+        } else if (payment_method === 'mercadopago-button') {
+            $('#mercadopago-button').click();
+        } else if (payment_method === 'digital_payment') {
+            $('#internal-point-pay-button').click();
+        } else if (payment_method === '6cash') {
+            $('#6cash-button').click();
+        }
+    });
+</script>
+</script>
+
 @php($config=\App\CentralLogics\Helpers::get_business_settings('bkash'))
 @if(isset($config) && $config['status'])
-    {{-- BKash Starts --}}
-    @if(env('APP_MODE')=='live')
-        <script id="myScript"
-                src="https://scripts.pay.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout.js"></script>
-    @else
-        <script id="myScript"
-                src="https://scripts.sandbox.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout-sandbox.js"></script>
-    @endif
-
     <script type="text/javascript">
         function BkashPayment() {
-            $('#loading').show();
-            // get token
-            $.ajax({
-                url: "{{ route('bkash-get-token') }}",
-                type: 'POST',
-                contentType: 'application/json',
-                success: function (data) {
-                    $('#loading').hide();
-                    $('pay-with-bkash-button').trigger('click');
-                    if (data.hasOwnProperty('msg')) {
-                        showErrorMessage(data) // unknown error
-                    }
-                },
-                error: function (err) {
-                    $('#loading').hide();
-                    showErrorMessage(err);
-                }
-            });
-        }
-
-        let paymentID = '';
-        bKash.init({
-            paymentMode: 'checkout',
-            paymentRequest: {},
-            createRequest: function (request) {
-                setTimeout(function () {
-                    createPayment(request);
-                }, 2000)
-            },
-            executeRequestOnAuthorization: function (request) {
-                $.ajax({
-                    url: '{{ route('bkash-execute-payment') }}',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        "paymentID": paymentID
-                    }),
-                    success: function (data) {
-                        if (data) {
-                            if (data.paymentID != null) {
-                                BkashSuccess(data);
-                            } else {
-                                showErrorMessage(data);
-                                bKash.execute().onError();
-                            }
-                        } else {
-                            $.get('{{ route('bkash-query-payment') }}', {
-                                payment_info: {
-                                    payment_id: paymentID
-                                }
-                            }, function (data) {
-                                if (data.transactionStatus === 'Completed') {
-                                    BkashSuccess(data);
-                                } else {
-                                    createPayment(request);
-                                }
-                            });
-                        }
-                    },
-                    error: function (err) {
-                        bKash.execute().onError();
-                    }
-                });
-            },
-            onClose: function () {
-                // for error handle after close bKash Popup
-            }
-        });
-
-        function createPayment(request) {
-            // because of createRequest function finds amount from this request
-            request['amount'] = "{{round(($order_amount),2)}}"; // max two decimal points allowed
-            $.ajax({
-                url: '{{ route('bkash-create-payment') }}',
-                data: JSON.stringify(request),
-                type: 'POST',
-                contentType: 'application/json',
-                success: function (data) {
-                    $('#loading').hide();
-                    if (data && data.paymentID != null) {
-                        paymentID = data.paymentID;
-                        bKash.create().onSuccess(data);
-                    } else {
-                        bKash.create().onError();
-                    }
-                },
-                error: function (err) {
-                    $('#loading').hide();
-                    showErrorMessage(err.responseJSON);
-                    bKash.create().onError();
-                }
-            });
-        }
-
-        function BkashSuccess(data) {
-            $.post('{{ route('bkash-success') }}', {
-                payment_info: data,
-                callback: "{{ $callback }}",
-            }, function (res) {
-                location.href = res.redirect_url;
-                {{--location.href = '{{ route('payment-success')}}';--}}
-            });
-        }
-
-        function showErrorMessage(response) {
-            let message = 'Unknown Error';
-            if (response.hasOwnProperty('errorMessage')) {
-                let errorCode = parseInt(response.errorCode);
-                let bkashErrorCode = [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,
-                    2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030,
-                    2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044, 2045, 2046,
-                    2047, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056, 2057, 2058, 2059, 2060, 2061, 2062,
-                    2063, 2064, 2065, 2066, 2067, 2068, 2069, 503,
-                ];
-                if (bkashErrorCode.includes(errorCode)) {
-                    message = response.errorMessage
-                }
-            }
-            Swal.fire("Payment Failed!", message, "error");
+            location.href='{!! route('bkash.make-payment',['order_amount'=>$order_amount,'customer_id'=>$customer['id'],'callback'=>$callback]) !!}'
         }
     </script>
-    {{-- BKash Ends --}}
 @endif
+
+{{--@php($config=\App\CentralLogics\Helpers::get_business_settings('bkash'))--}}
+{{--@if(isset($config) && $config['status'])--}}
+{{--    --}}{{-- BKash Starts --}}
+{{--    @if(env('APP_MODE')=='live')--}}
+{{--        <script id="myScript"--}}
+{{--                src="https://scripts.pay.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout.js"></script>--}}
+{{--    @else--}}
+{{--        <script id="myScript"--}}
+{{--                src="https://scripts.sandbox.bka.sh/versions/1.2.0-beta/checkout/bKash-checkout-sandbox.js"></script>--}}
+{{--    @endif--}}
+
+{{--    <script type="text/javascript">--}}
+{{--        function BkashPayment() {--}}
+{{--            $('#loading').show();--}}
+{{--            // get token--}}
+{{--            $.ajax({--}}
+{{--                url: "{{ route('bkash-get-token') }}",--}}
+{{--                type: 'POST',--}}
+{{--                contentType: 'application/json',--}}
+{{--                success: function (data) {--}}
+{{--                    $('#loading').hide();--}}
+{{--                    $('pay-with-bkash-button').trigger('click');--}}
+{{--                    if (data.hasOwnProperty('msg')) {--}}
+{{--                        showErrorMessage(data) // unknown error--}}
+{{--                    }--}}
+{{--                },--}}
+{{--                error: function (err) {--}}
+{{--                    $('#loading').hide();--}}
+{{--                    showErrorMessage(err);--}}
+{{--                }--}}
+{{--            });--}}
+{{--        }--}}
+
+{{--        let paymentID = '';--}}
+{{--        bKash.init({--}}
+{{--            paymentMode: 'checkout',--}}
+{{--            paymentRequest: {},--}}
+{{--            createRequest: function (request) {--}}
+{{--                setTimeout(function () {--}}
+{{--                    createPayment(request);--}}
+{{--                }, 2000)--}}
+{{--            },--}}
+{{--            executeRequestOnAuthorization: function (request) {--}}
+{{--                $.ajax({--}}
+{{--                    url: '{{ route('bkash-execute-payment') }}',--}}
+{{--                    type: 'POST',--}}
+{{--                    contentType: 'application/json',--}}
+{{--                    data: JSON.stringify({--}}
+{{--                        "paymentID": paymentID--}}
+{{--                    }),--}}
+{{--                    success: function (data) {--}}
+{{--                        if (data) {--}}
+{{--                            if (data.paymentID != null) {--}}
+{{--                                BkashSuccess(data);--}}
+{{--                            } else {--}}
+{{--                                showErrorMessage(data);--}}
+{{--                                bKash.execute().onError();--}}
+{{--                            }--}}
+{{--                        } else {--}}
+{{--                            $.get('{{ route('bkash-query-payment') }}', {--}}
+{{--                                payment_info: {--}}
+{{--                                    payment_id: paymentID--}}
+{{--                                }--}}
+{{--                            }, function (data) {--}}
+{{--                                if (data.transactionStatus === 'Completed') {--}}
+{{--                                    BkashSuccess(data);--}}
+{{--                                } else {--}}
+{{--                                    createPayment(request);--}}
+{{--                                }--}}
+{{--                            });--}}
+{{--                        }--}}
+{{--                    },--}}
+{{--                    error: function (err) {--}}
+{{--                        bKash.execute().onError();--}}
+{{--                    }--}}
+{{--                });--}}
+{{--            },--}}
+{{--            onClose: function () {--}}
+{{--                // for error handle after close bKash Popup--}}
+{{--            }--}}
+{{--        });--}}
+
+{{--        function createPayment(request) {--}}
+{{--            // because of createRequest function finds amount from this request--}}
+{{--            request['amount'] = "{{round(($order_amount),2)}}"; // max two decimal points allowed--}}
+{{--            $.ajax({--}}
+{{--                url: '{{ route('bkash-create-payment') }}',--}}
+{{--                data: JSON.stringify(request),--}}
+{{--                type: 'POST',--}}
+{{--                contentType: 'application/json',--}}
+{{--                success: function (data) {--}}
+{{--                    $('#loading').hide();--}}
+{{--                    if (data && data.paymentID != null) {--}}
+{{--                        paymentID = data.paymentID;--}}
+{{--                        bKash.create().onSuccess(data);--}}
+{{--                    } else {--}}
+{{--                        bKash.create().onError();--}}
+{{--                    }--}}
+{{--                },--}}
+{{--                error: function (err) {--}}
+{{--                    $('#loading').hide();--}}
+{{--                    showErrorMessage(err.responseJSON);--}}
+{{--                    bKash.create().onError();--}}
+{{--                }--}}
+{{--            });--}}
+{{--        }--}}
+
+{{--        function BkashSuccess(data) {--}}
+{{--            $.post('{{ route('bkash-success') }}', {--}}
+{{--                payment_info: data,--}}
+{{--                callback: "{{ $callback }}",--}}
+{{--            }, function (res) {--}}
+{{--                location.href = res.redirect_url;--}}
+{{--                --}}{{--location.href = '{{ route('payment-success')}}';--}}
+{{--            });--}}
+{{--        }--}}
+
+{{--        function showErrorMessage(response) {--}}
+{{--            let message = 'Unknown Error';--}}
+{{--            if (response.hasOwnProperty('errorMessage')) {--}}
+{{--                let errorCode = parseInt(response.errorCode);--}}
+{{--                let bkashErrorCode = [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,--}}
+{{--                    2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030,--}}
+{{--                    2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044, 2045, 2046,--}}
+{{--                    2047, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056, 2057, 2058, 2059, 2060, 2061, 2062,--}}
+{{--                    2063, 2064, 2065, 2066, 2067, 2068, 2069, 503,--}}
+{{--                ];--}}
+{{--                if (bkashErrorCode.includes(errorCode)) {--}}
+{{--                    message = response.errorMessage--}}
+{{--                }--}}
+{{--            }--}}
+{{--            Swal.fire("Payment Failed!", message, "error");--}}
+{{--        }--}}
+{{--    </script>--}}
+{{--    --}}{{-- BKash Ends --}}
+{{--@endif--}}
 
 {{-- Mercadopago Starts --}}
 @php($config=\App\CentralLogics\Helpers::get_business_settings('mercadopago'))

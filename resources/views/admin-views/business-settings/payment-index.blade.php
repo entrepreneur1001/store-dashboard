@@ -14,7 +14,7 @@
         </div>
         <!-- End Page Header -->
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
@@ -45,6 +45,11 @@
                                     <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <div class="form-group">
+                                    <label class="form-label text--title">
+                                        <strong>{{translate('cash_on_delivery')}}</strong>
+                                    </label>
+                                </div>
                                 <div class="text-right">
                                     <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
                                 </div>
@@ -53,7 +58,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
@@ -84,6 +89,55 @@
                                     <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <div class="form-group">
+                                    <label class="form-label text--title">
+                                        <strong>{{translate('digital')}} {{translate('payment')}}</strong>
+                                    </label>
+                                </div>
+                                <div class="text-right">
+                                    <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
+                                </div>
+                            @endif
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
+                        @php($config=\App\CentralLogics\Helpers::get_business_settings('offline_payment'))
+                        <form action="{{route('admin.business-settings.web-app.payment-method-update',['offline_payment'])}}"
+                              method="post">
+                            @csrf
+                            @if(isset($config))
+
+                                <div class="form-group">
+                                    <label class="form-label text--title">
+                                        <strong>{{translate('offline')}} {{translate('payment')}}</strong>
+                                    </label>
+                                </div>
+
+                                <div class="d-flex flex-wrap mb-4">
+                                    <label class="form-check mr-2 mr-md-4">
+                                        <input class="form-check-input" type="radio" name="status"  value="1" {{$config['status']==1?'checked':''}}>
+                                        <span class="form-check-label text--title pl-2">{{translate('active')}}</span>
+                                    </label>
+                                    <label class="form-check">
+                                        <input class="form-check-input" type="radio" name="status" value="0" {{$config['status']==0?'checked':''}}>
+                                        <span class="form-check-label text--title pl-2">{{translate('inactive')}}</span>
+                                    </label>
+                                </div>
+
+                                <div class="text-right">
+                                    <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
+                                </div>
+                            @else
+                                <div class="form-group">
+                                    <label class="form-label text--title">
+                                        <strong>{{translate('offline')}} {{translate('payment')}}</strong>
+                                    </label>
+                                </div>
                                 <div class="text-right">
                                     <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
                                 </div>
@@ -131,6 +185,13 @@
                                         class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('sslcommerz')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/sslcomz.png')}}" alt="public">
+                                </div>
                                 <div class="text-right">
                                     <button type="submit"
                                         class="btn btn-primary px-5">{{translate('configure')}}</button>
@@ -180,6 +241,13 @@
                                         onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}" class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('razorpay')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/razorpay.png')}}" alt="public">
+                                </div>
                                 <div class="text-right">
                                     <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
                                 </div>
@@ -228,6 +296,13 @@
                                         onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}" class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('paypal')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/paypal.png')}}" alt="public">
+                                </div>
                                 <div class="text-right">
                                     <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
                                 </div>
@@ -275,6 +350,13 @@
                                     <button type="{{env('APP_MODE')!='demo'?'submit':'button'}}" onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}" class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('stripe')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/stripe.png')}}" alt="public">
+                                </div>
                                 <div class="text-right">
                                     <button type="submit"
                                         class="btn btn-primary px-5">{{translate('configure')}}</button>
@@ -325,6 +407,13 @@
                                     </button>
                                 </div>
                             @else<div class="text-right">
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('senang')}} {{translate('pay')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/senangpay.png')}}" alt="public">
+                                </div>
                                 <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button></div>
                             @endif
                         </form>
@@ -379,6 +468,13 @@
                                         class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('paystack')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/paystack.png')}}" alt="public">
+                                </div>
                             <div class="text-right">
                                     <button type="submit"
                                         class="btn btn-primary px-5">{{translate('configure')}}</button>
@@ -439,6 +535,13 @@
                                         </div>
                             @else
                             <div class="text-right">
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('bkash')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/bkash.png')}}" alt="public">
+                                </div>
                                 <button type="submit"
                                         class="btn btn-primary px-5">{{translate('configure')}}</button>
                                         </div>
@@ -498,6 +601,13 @@
                                         class="btn btn-primary px-5">{{translate('save')}}</button>
                                         </div>
                             @else
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('paymob')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/paymob.png')}}" alt="public">
+                                </div>
                             <div class="text-right">
                                 <button type="submit"
                                         class="btn btn-primary px-5">{{translate('configure')}}</button>
@@ -551,6 +661,12 @@
                                         onclick="{{env('APP_MODE')!='demo'?'':'call_demo()'}}"
                                         class="btn btn-primary px-5">{{translate('save')}}</button></div>
                             @else<div class="text-right">
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('flutterwave')}}</span>
+                                </h5>
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/fluterwave.png')}}" alt="public">
+                                </div>
                                 <button type="submit"
                                         class="btn btn-primary px-5">{{translate('configure')}}</button></div>
                             @endif
@@ -599,6 +715,13 @@
                                         class="btn btn-primary px-5">{{translate('save')}}</button>
                                 </div>
                             @else
+                                <h5 class="d-flex flex-wrap justify-content-between">
+                                    <span class="text-uppercase">{{translate('mercadopago')}}</span>
+                                </h5>
+
+                                <div class="payment--gateway-img">
+                                    <img src="{{asset('/public/assets/admin/img/MercadoPago_(Horizontal).svg')}}" alt="public">
+                                </div>
                             <div class="text-right">
                                 <button type="submit"
                                         class="btn btn-primary px-5">{{translate('configure')}}</button>
@@ -608,6 +731,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 @endsection

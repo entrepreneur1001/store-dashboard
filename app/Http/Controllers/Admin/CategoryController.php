@@ -7,39 +7,56 @@ use App\Http\Controllers\Controller;
 use App\Model\Category;
 use App\Model\Translation;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
-    function index(Request $request)
+    public function __construct(
+        private Category $category
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    function index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if ($request->has('search')) {
             $key = explode(' ', $request['search']);
-            $categories = Category::where(['position' => 0])->where(function ($q) use ($key) {
+            $categories = $this->category->where(['position' => 0])->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('name', 'like', "%{$value}%");
                 }
             });
             $query_param = ['search' => $request['search']];
         } else {
-            $categories = Category::where(['position' => 0]);
+            $categories = $this->category->where(['position' => 0]);
         }
         $categories = $categories->latest()->paginate(Helpers::getPagination())->appends($query_param);
         return view('admin-views.category.index', compact('categories', 'search'));
     }
 
-    function sub_index(Request $request)
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    function sub_index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if ($request->has('search')) {
             $key = explode(' ', $request['search']);
-            $categories = Category::with(['parent'])->where(['position' => 1])
+            $categories = $this->category->with(['parent'])->where(['position' => 1])
                 ->where(function ($q) use ($key) {
                     foreach ($key as $value) {
                         $q->orWhere('name', 'like', "%{$value}%");
@@ -47,16 +64,20 @@ class CategoryController extends Controller
                 });
             $query_param = ['search' => $request['search']];
         } else {
-            $categories = Category::with(['parent'])->where(['position' => 1]);
+            $categories = $this->category->with(['parent'])->where(['position' => 1]);
         }
         $categories = $categories->latest()->paginate(Helpers::getPagination())->appends($query_param);
         return view('admin-views.category.sub-index', compact('categories', 'search'));
     }
 
-    public function search(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function search(Request $request): JsonResponse
     {
         $key = explode(' ', $request['search']);
-        $categories = Category::where(function ($q) use ($key) {
+        $categories = $this->category->where(function ($q) use ($key) {
             foreach ($key as $value) {
                 $q->orWhere('name', 'like', "%{$value}%");
             }
@@ -66,22 +87,35 @@ class CategoryController extends Controller
         ]);
     }
 
-    function sub_sub_index()
+    /**
+     * @return Factory|View|Application
+     */
+    function sub_sub_index(): View|Factory|Application
     {
         return view('admin-views.category.sub-sub-index');
     }
 
-    function sub_category_index()
+    /**
+     * @return Factory|View|Application
+     */
+    function sub_category_index(): View|Factory|Application
     {
         return view('admin-views.category.index');
     }
 
-    function sub_sub_category_index()
+    /**
+     * @return Factory|View|Application
+     */
+    function sub_sub_category_index(): View|Factory|Application
     {
         return view('admin-views.category.index');
     }
 
-    function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required',
@@ -96,7 +130,7 @@ class CategoryController extends Controller
 
         //uniqueness check
         $parent_id = $request->parent_id ?? 0;
-        $all_category = Category::where(['parent_id' => $parent_id])->pluck('name')->toArray();
+        $all_category = $this->category->where(['parent_id' => $parent_id])->pluck('name')->toArray();
 
         if (in_array($request->name[0], $all_category)) {
             Toastr::error(translate(($request->parent_id == null ? 'Category' : 'Sub_category') . ' already exists!'));
@@ -111,7 +145,7 @@ class CategoryController extends Controller
         }
 
         //into db
-        $category = new Category();
+        $category = $this->category;
         $category->name = $request->name[array_search('en', $request->lang)];
         $category->image = $image_name;
         $category->parent_id = $request->parent_id == null ? 0 : $request->parent_id;
@@ -122,13 +156,13 @@ class CategoryController extends Controller
         $data = [];
         foreach ($request->lang as $index => $key) {
             if ($request->name[$index] && $key != 'en') {
-                array_push($data, array(
+                $data[] = array(
                     'translationable_type' => 'App\Model\Category',
                     'translationable_id' => $category->id,
                     'locale' => $key,
                     'key' => 'name',
                     'value' => $request->name[$index],
-                ));
+                );
             }
         }
         if (count($data)) {
@@ -139,22 +173,35 @@ class CategoryController extends Controller
         return back();
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function edit($id): View|Factory|Application
     {
-        $category = category::withoutGlobalScopes()->with('translations')->find($id);
+        $category = $this->category->withoutGlobalScopes()->with('translations')->find($id);
         return view('admin-views.category.edit', compact('category'));
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): RedirectResponse
     {
-        $category = category::find($request->id);
+        $category = $this->category->find($request->id);
         $category->status = $request->status;
         $category->save();
         Toastr::success($category->parent_id == 0 ? translate('Category status updated!') : translate('Sub Category status updated!'));
         return back();
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): RedirectResponse
     {
         $request->validate([
             'name' =>'required|unique:categories,name,'.$request->id
@@ -167,7 +214,7 @@ class CategoryController extends Controller
             }
         }
 
-        $category = category::find($id);
+        $category = $this->category->find($id);
         $category->name = $request->name[array_search('en', $request->lang)];
         $category->image = $request->has('image') ? Helpers::update('category/', $category->image, 'png', $request->file('image')) : $category->image;
         $category->save();
@@ -186,9 +233,13 @@ class CategoryController extends Controller
         return back();
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): RedirectResponse
     {
-        $category = category::find($request->id);
+        $category = $this->category->find($request->id);
         if (Storage::disk('public')->exists('category/' . $category['image'])) {
             Storage::disk('public')->delete('category/' . $category['image']);
         }

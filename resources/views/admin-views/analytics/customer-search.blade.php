@@ -173,16 +173,16 @@
                             <td>
                                 <div class="media align-items-center gap-3 max-content">
                                     <div class="avatar avatar-lg">
-                                        <a href="{{route('admin.customer.view',[$value->customer['id']])}}" class="product-list-media">
+                                        <a href="{{$value->customer ? route('admin.customer.view',[$value->customer['id']]) : '#'}}" class="product-list-media">
                                             <img class="rounded-full"
-                                                 src="{{asset('storage/app/public/profile/'.$value->customer->image)}}"
+                                                 src="{{asset('storage/app/public/profile/'.$value->customer?->image)}}"
                                                  onerror="this.src='{{asset('/public/assets/admin/img/admin.png')}}'">
 
                                         </a>
                                     </div>
                                     <div class="media-body">
                                         <h5 class="title m-0">
-                                            {{$value->customer['f_name']." ".$value->customer['l_name']}}
+                                            {{$value->customer ? $value->customer['f_name']." ".$value->customer['l_name'] : 'Customer Deleted'}}
                                         </h5>
                                     </div>
                                 </div>
@@ -242,7 +242,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">{{ $customer->Customer['f_name'].' '.$customer->Customer['l_name'] }}</h5>
+                        <h5 class="modal-title">{{ $customer->Customer ? $customer->Customer['f_name'].' '.$customer->Customer['l_name'] : 'Customer Deleted'}}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>

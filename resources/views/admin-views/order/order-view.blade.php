@@ -81,7 +81,7 @@
                             </div>
                             <div class="text-right mt-3 order-invoice-right-contents text-capitalize">
                                 <h6>
-                                    {{translate('Status ')}} :
+                                    {{translate('Status')}} :
                                     @if($order['order_status']=='pending')
                                         <span class="badge badge-soft-info ml-2 ml-sm-3 text-capitalize">
                                         {{translate('pending')}}
@@ -110,7 +110,7 @@
                                 </h6>
                                 <h6 class="text-capitalize">
                                     <span class="text-body mr-2">{{translate('payment')}} {{translate('method')}}
-                                    :</span> <span class="text--title font-bold">{{str_replace('_',' ',$order['payment_method'])}}</span>
+                                    :</span> <span class="text--title font-bold">{{ translate(str_replace('_',' ',$order['payment_method']))}}</span>
                                 </h6>
                                 <h6 class="text-capitalize">
                                     @if($order['transaction_reference']==null && $order['order_type']!='pos')
@@ -126,7 +126,7 @@
                                     @endif
                                 </h6>
                                 <h6>
-                                    <span class="text-body mr-2">{{translate('Payment Status ')}} : </span>
+                                    <span class="text-body mr-2">{{ translate('payment') }} {{ translate('status') }} : </span>
 
                                     @if($order['payment_status']=='paid')
                                         <span class="badge badge-soft-success ml-sm-3">
@@ -140,8 +140,18 @@
                                 </h6>
                                 <h6 class="text-capitalize">
                                     <span class="text-body">{{translate('order')}} {{translate('type')}}</span>
-                                    :<label class="badge badge-soft-primary ml-3">{{str_replace('_',' ',$order['order_type'])}}</label>
+                                    :<label class="badge badge-soft-primary ml-3">{{ translate(str_replace('_',' ',$order['order_type'])) }}</label>
                                 </h6>
+                                @if($order['payment_method']=='offline_payment')
+                                    <h6 class="text-capitalize">
+                                        <span class="text-body mr-2">{{translate('payment')}} {{translate('by')}}
+                                        :</span> <span class="text--title font-bold"> {{$order['payment_by']}}</span>
+                                    </h6>
+                                    <h6 class="text-capitalize">
+                                        <span class="text-body mr-2">{{translate('payment')}} {{translate('note')}}
+                                        :</span> <span class="text--title font-bold"> {{$order['payment_note']}}</span>
+                                    </h6>
+                                @endif
                             </div>
                         </div>
                         @if($order['order_type'] != 'pos')
@@ -163,6 +173,8 @@
                     @php($total_dis_on_pro=0)
                     @php($total_item_discount=0)
                     @php($price_after_discount=0)
+                    @php($updated_total_tax=0)
+                    @php($vat_status = '')
                     <div class="table-responsive">
                         <table class="table table-borderless table-nowrap table-align-middle card-table dataTable no-footer mb-0">
                             <thead class="thead-light">
@@ -226,6 +238,8 @@
                                             {{--@php($amount=($detail['price']-$detail['discount_on_product'])*$detail['quantity'])--}}
                                             @php($amount+=$detail['price']*$detail['quantity'])
                                             @php($total_tax+=$detail['tax_amount']*$detail['quantity'])
+                                            @php($updated_total_tax+= $detail['vat_status'] === 'included' ? 0 : $detail['tax_amount']*$detail['quantity'])
+                                            @php($vat_status = $detail['vat_status'])
                                             @php($total_item_discount += $detail['discount_on_product'] * $detail['quantity'])
                                             @php($price_after_discount+=$amount-$total_item_discount)
                                             @php($sub_total+=$price_after_discount)
@@ -273,7 +287,7 @@
                                     </dd>
                                     <dt class="col-6 text-left">
                                         <div class="ml-auto max-w-130px">
-                                            {{translate('TAX')}} / {{translate('VAT')}} :
+                                            {{translate('TAX')}} / {{translate('VAT')}} {{ $vat_status == 'included' ? translate('(included)') : '' }}:
                                         </div>
                                     </dt>
                                     <dd class="col-6 col-xl-5 pr-5">
@@ -319,7 +333,7 @@
                                             {{translate('total')}}:
                                         </div>
                                         </dt>
-                                    <dd class="col-6 col-xl-5 pr-5">{{ Helpers::set_symbol($total+$del_c+$total_tax-$order['coupon_discount_amount']-$order['extra_discount']) }}</dd>
+                                    <dd class="col-6 col-xl-5 pr-5">{{ Helpers::set_symbol($total+$del_c+$updated_total_tax-$order['coupon_discount_amount']-$order['extra_discount']) }}</dd>
                                 </dl>
                                 <!-- End Row -->
                             </div>
@@ -425,7 +439,7 @@
                         @if(($order['order_type'] !='self_pickup') && ($order['order_type'] !='pos'))
                                 @if (!$order->delivery_man)
                                     <div class="mt-3">
-                                        <button class="btn btn--primary w-100" type="button" data-target="#assign_delivey_man_modal" data-toggle="modal">{{translate('assign delivery man manually')}}</button>
+                                        <button class="btn btn--primary w-100" type="button" data-target="#assign_delivey_man_modal" data-toggle="modal">{{ translate('assign delivery man manually') }}</button>
                                     </div>
                                 @endif
                                 @if ($order->delivery_man)
@@ -550,6 +564,7 @@
                                     <span class="fz--14px text--title font-semibold text-hover-primary d-block">
                                         {{translate('Walking Customer')}}
                                     </span>
+                                    </div>
                                 </div>
                             @endif
                                     @if($order->user_id != null && !isset($order->customer) )
@@ -561,6 +576,7 @@
                                             <span class="fz--14px text--title font-semibold text-hover-primary d-block">
                                                 {{translate('Customer_not_available')}}
                                             </span>
+                                            </div>
                                         </div>
                                     @endif
                             @if(isset($order->customer) )
@@ -631,6 +647,7 @@
             </div>
 
         </div>
+
         <!-- End Row -->
     </div>
 
@@ -658,7 +675,7 @@
                         </div>
                         <!-- End Input Group -->
                         <div class="btn--container justify-content-end">
-                            <button class="btn btn--reset" type="reset">{{translate('clear')}}</button>
+                            <button type="button" class="btn btn-white" data-dismiss="modal">{{translate('close')}}</button>
                             <button class="btn btn--primary" type="submit">{{translate('submit')}}</button>
                         </div>
                     </div>

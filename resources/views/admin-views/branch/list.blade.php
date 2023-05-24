@@ -12,7 +12,7 @@
         <div class="page-header">
             <h1 class="page-header-title">
                 <span class="page-header-icon">
-                    <img src="{{asset('public/assets/admin/img/banner.png')}}" class="w--20" alt="">
+                    <img src="{{asset('public/assets/admin/img/add_branch.png')}}" class="w--20" alt="">
                 </span>
                 <span>
                     {{translate('branch List')}} <span class="badge badge-soft-secondary">{{ $branches->total() }}</span>
@@ -93,6 +93,7 @@
                                         </div>
                                     </td>
                                     <td>
+                                        @if($branch['id']!=1)
                                         <label class="toggle-switch">
                                             <input type="checkbox"
                                                    onclick="status_change_alert('{{ route('admin.branch.status', [$branch->id, $branch->status ? 0 : 1]) }}', '{{ $branch->status? translate('you_want_to_disable_this_branch'): translate('you_want_to_active_this_branch') }}', event)"
@@ -102,17 +103,20 @@
                                         <span class="toggle-switch-indicator"></span>
                                     </span>
                                         </label>
+                                        @endif
                                     </td>
                                     <td>
                                         <!-- Dropdown -->
                                         <div class="btn--container justify-content-center">
                                             <a class="action-btn"
-                                                href="{{route('admin.branch.edit',[$branch['id']])}}">
-                                            <i class="tio-edit"></i></a>
-                                            <a class="action-btn btn--danger btn-outline-danger" href="javascript:"
-                                                onclick="form_alert('branch-{{$branch['id']}}','{{ translate("Want to delete this") }}')">
-                                                <i class="tio-delete-outlined"></i>
+                                                href="{{route('admin.branch.edit',[$branch['id']])}}"><i class="tio-edit"></i>
                                             </a>
+                                            @if($branch['id']!=1)
+                                                <a class="action-btn btn--danger btn-outline-danger" href="javascript:"
+                                                    onclick="form_alert('branch-{{$branch['id']}}','{{ translate("Want to delete this") }}')">
+                                                    <i class="tio-delete-outlined"></i>
+                                                </a>
+                                            @endif
                                         </div>
                                         <form action="{{route('admin.branch.delete',[$branch['id']])}}"
                                                 method="post" id="branch-{{$branch['id']}}">

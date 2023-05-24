@@ -47,6 +47,7 @@
                                 <label class="input-label" for="exampleFormControlInput1">{{translate('start')}} {{translate('date')}}</label>
                                 <label class="input-date">
                                     <input type="text" name="start_date" value="{{date('Y/m/d',strtotime($discount['start_date']))}}"
+                                           id="start_date"
                                            class="js-flatpickr form-control flatpickr-custom"
                                            placeholder="{{ \App\CentralLogics\translate('dd/mm/yy') }}"
                                            data-hs-flatpickr-options='{ "dateFormat": "Y/m/d", "minDate": "today" }' required>
@@ -58,6 +59,7 @@
                                 <label class="input-label" for="exampleFormControlInput1">{{translate('expire')}} {{translate('date')}}</label>
                                 <label class="input-date">
                                     <input type="text" name="expire_date" value="{{date('Y/m/d',strtotime($discount['expire_date']))}}"
+                                           id="expire_date"
                                            class="js-flatpickr form-control flatpickr-custom"
                                            placeholder="{{ \App\CentralLogics\translate('dd/mm/yy') }}"
                                            data-hs-flatpickr-options='{ "dateFormat": "Y/m/d", "minDate": "today" }' required>
@@ -68,7 +70,7 @@
                             <div class="form-group mb-0">
                                 <label class="input-label" for="exampleFormControlSelect1">{{translate('discount')}} {{translate('type')}}<span
                                         class="input-label-secondary">*</span></label>
-                                <select name="discount_type" class="form-control" onchange="show_item(this.value)">
+                                <select name="discount_type" class="form-control" onchange="show_item(this.value)" id="discount_type">
                                     <option value="percent" {{ $discount['discount_type'] == 'percent'? 'selected' : '' }}>{{translate('percent')}}</option>
                                     <option value="amount" {{ $discount['discount_type'] == 'amount'? 'selected' : '' }}>{{translate('amount')}}</option>
                                 </select>
@@ -80,7 +82,8 @@
                                 <input type="number" step="0.1" name="discount_amount" value="{{$discount['discount_amount']}}" class="form-control" placeholder="{{ translate('discount_amount') }}" required>
                             </div>
                         </div>
-                        <div class="col-6 {{ $discount['discount_type'] == 'amount' ? 'd-none' : '' }}" id="max_amount_div">
+                        <div class="col-6" id="max_amount_div">
+{{--                        <div class="col-6 {{ $discount['discount_type'] == 'amount' ? 'd-none' : '' }}" id="max_amount_div">--}}
                             <div class="form-group mb-0">
                                 <label class="input-label" for="exampleFormControlInput1">{{translate('maximum_amount')}}</label>
                                 <input type="number" step="0.1" name="maximum_amount" value="{{$discount['maximum_amount']}}" class="form-control" placeholder="{{ translate('maximum_amount') }}">
@@ -112,6 +115,31 @@
             });
         });
 
+        $('#start_date,#expire_date').change(function () {
+            let fr = $('#start_date').val();
+            let to = $('#expire_date').val();
+            if (fr != '' && to != '') {
+                if (fr > to) {
+                    $('#start_date').val('');
+                    $('#expire_date').val('');
+                    toastr.error('Invalid date range!', Error, {
+                        CloseButton: true,
+                        ProgressBar: true
+                    });
+                }
+            }
+        });
+
+        let selected_type = $("#discount_type").val();
+
+        $(document).ready(function() {
+            if (selected_type === 'amount') {
+                $("#max_amount_div").hide();
+            } else {
+                $("#max_amount_div").show();
+            }
+        });
+
         function show_item(type) {
             if (type === 'amount') {
                 $("#max_amount_div").hide();
@@ -125,6 +153,7 @@
                 $("#max_amount_div").show();
             });
         });
+
     </script>
 
 @endpush

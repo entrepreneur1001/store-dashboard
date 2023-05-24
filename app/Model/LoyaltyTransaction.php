@@ -28,7 +28,7 @@ class LoyaltyTransaction extends Model
         'created_at'=>'datetime'
     ];
 
-    public function customer()
+    public function customer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }

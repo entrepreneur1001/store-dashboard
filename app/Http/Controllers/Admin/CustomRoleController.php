@@ -4,36 +4,58 @@ namespace App\Http\Controllers\Admin;
 
 use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
+use Box\Spout\Common\Exception\InvalidArgumentException;
+use Box\Spout\Common\Exception\IOException;
+use Box\Spout\Common\Exception\UnsupportedTypeException;
+use Box\Spout\Writer\Exception\WriterNotOpenedException;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Model\AdminRole;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Rap2hpoutre\FastExcel\FastExcel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomRoleController extends Controller
 {
-    public function create(Request $request)
+    public  function __construct(
+        private AdminRole $admin_role
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    public function create(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if($request->has('search'))
         {
             $key = explode(' ', $request['search']);
-            $rl = AdminRole::where(function ($q) use ($key) {
+            $rl = $this->admin_role->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('name', 'like', "%{$value}%");
                 }
             });
             $query_param = ['search' => $request['search']];
         }else{
-            $rl=AdminRole::whereNotIn('id',[1]);
+            $rl=$this->admin_role->whereNotIn('id',[1]);
         }
         $rl = $rl->latest()->paginate(Helpers::getPagination())->appends($query_param);
 
         return view('admin-views.custom-role.create',compact('rl', 'search'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|unique:admin_roles',
@@ -58,13 +80,22 @@ class CustomRoleController extends Controller
         return back();
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function edit($id): View|Factory|Application
     {
-        $role=AdminRole::where(['id'=>$id])->first(['id','name','module_access']);
+        $role=$this->admin_role->where(['id'=>$id])->first(['id','name','module_access']);
         return view('admin-views.custom-role.edit',compact('role'));
     }
 
-    public function update(Request $request,$id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return Redirector|Application|RedirectResponse
+     */
+    public function update(Request $request, $id): Redirector|RedirectResponse|Application
     {
         $request->validate([
             'name' => 'required',
@@ -84,26 +115,41 @@ class CustomRoleController extends Controller
         return redirect(route('admin.custom-role.create'));
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): RedirectResponse
     {
-        $role = AdminRole::find($request->id);
+        $role = $this->admin_role->find($request->id);
         $role->delete();
         Toastr::success(translate('Role removed!'));
         return back();
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): RedirectResponse
     {
-        $role = AdminRole::find($request->id);
+        $role = $this->admin_role->find($request->id);
         $role->status = $request->status;
         $role->save();
         Toastr::success(translate('Role status updated!'));
         return back();
     }
 
-    public function export()
+    /**
+     * @return StreamedResponse|string
+     * @throws IOException
+     * @throws InvalidArgumentException
+     * @throws UnsupportedTypeException
+     * @throws WriterNotOpenedException
+     */
+    public function export(): StreamedResponse|string
     {
-        $roles = AdminRole::whereNotIn('id',[1])->get();
+        $roles = $this->admin_role->whereNotIn('id',[1])->get();
         $storage = [];
         foreach($roles as $role){
 

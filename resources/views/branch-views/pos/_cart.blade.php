@@ -16,6 +16,8 @@
         $discount_type = 'amount';
         $discount_on_product = 0;
         $total_tax = 0;
+        $updated_total_tax=0;
+        $vat_status = \App\CentralLogics\Helpers::get_business_settings('product_vat_tax_status') === 'included' ? 'included' : 'excluded';
         ?>
         @if(session()->has('cart') && count( session()->get('cart')) > 0)
             <?php
@@ -35,6 +37,7 @@
                     //tax calculation
                     $product = \App\Model\Product::find($cartItem['id']);
                     $total_tax += \App\CentralLogics\Helpers::tax_calculate($product, $cartItem['price']) * $cartItem['quantity'];
+                    $updated_total_tax += $vat_status === 'included' ? 0 : \App\CentralLogics\Helpers::tax_calculate($product, $cartItem['price']) * $cartItem['quantity'];
 
                     ?>
                     <tr>
@@ -115,19 +118,19 @@ if ($extra_discount) {
                     class="tio-edit"></i>
             </button> - {{ Helpers::set_symbol($extra_discount) }}</dd>
 
-        <dt class="col-sm-6">{{translate('tax')}} :</dt>
+        <dt class="col-sm-6">{{translate('tax')}} {{ \App\CentralLogics\Helpers::get_business_settings('product_vat_tax_status') === 'included'?  '(Included)': ''}} :</dt>
         <dd class="col-sm-6 text-right">{{ Helpers::set_symbol(round($total_tax,2)) }}</dd>
         <dt class="col-12">
             <hr class="mt-0">
         </dt>
         <dt class="col-sm-6">{{translate('total')}} :</dt>
-        <dd class="col-sm-6 text-right h4 b">{{ Helpers::set_symbol(round($total+$total_tax, 2)) }}</dd>
+        <dd class="col-sm-6 text-right h4 b">{{ Helpers::set_symbol(round($total+$updated_total_tax, 2)) }}</dd>
     </dl>
     <div>
         <form action="{{route('branch.pos.order')}}" id='order_place' method="post">
             @csrf
             <div class="pos--payment-options mt-3 mb-3">
-                <h5 class="mb-3">Payment Method</h5>
+                <h5 class="mb-3">{{ translate('Payment Method') }}</h5>
                 <ul>
                     <li>
                         <label>
@@ -193,7 +196,7 @@ if ($extra_discount) {
                         </select>
                     </div>
                     <div class="col-sm-12">
-                        <div class="btn--container">
+                        <div class="btn--container justify-content-end">
                             <button class="btn btn-sm btn--reset" type="reset">{{translate('reset')}}</button>
                             <button class="btn btn-sm btn--primary" type="submit">{{translate('submit')}}</button>
                         </div>

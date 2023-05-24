@@ -20,6 +20,7 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
         Route::put('reset-password', 'PasswordResetController@reset_password_submit');
 
         Route::group(['prefix' => 'delivery-man'], function () {
+            Route::post('register', 'DeliveryManLoginController@registration');
             Route::post('login', 'DeliveryManLoginController@login');
         });
     });
@@ -40,12 +41,17 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
         Route::get('daily-needs', 'ProductController@get_daily_need_products');
         Route::post('reviews/submit', 'ProductController@submit_product_review')->middleware('auth:api');
 
-
         Route::group(['prefix' => 'favorite', 'middleware' => ['auth:api', 'customer_is_block']], function () {
             Route::get('/', 'ProductController@get_favorite_products');
             Route::post('/', 'ProductController@add_favorite_products');
             Route::delete('/', 'ProductController@remove_favorite_products');
         });
+
+        Route::get('featured', 'ProductController@featured_products');
+        Route::get('most-viewed', 'ProductController@get_most_viewed_products');
+        Route::get('trending', 'ProductController@get_trending_products');
+        Route::get('recommended', 'ProductController@get_recommended_products');
+        Route::get('most-reviewed', 'ProductController@get_most_reviewed_products');
     });
 
     Route::group(['prefix' => 'banners'], function () {
@@ -105,6 +111,10 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
             Route::post('add', 'WishlistController@add_to_wishlist');
             Route::delete('remove', 'WishlistController@remove_from_wishlist');
         });
+
+        Route::post('transfer-point-to-wallet', 'CustomerWalletController@transfer_loyalty_point_to_wallet');
+        Route::get('wallet-transactions', 'CustomerWalletController@wallet_transactions');
+        Route::get('loyalty-point-transactions', 'LoyaltyPointController@point_transactions');
     });
 
     Route::group(['prefix' => 'banners'], function () {
@@ -125,6 +135,11 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
         Route::get('distance-api', 'MapApiController@distance_api');
         Route::get('place-api-details', 'MapApiController@place_api_details');
         Route::get('geocode-api', 'MapApiController@geocode_api');
+    });
+
+    Route::group(['prefix' => 'flash-deals'], function () {
+        Route::get('/', 'OfferController@get_flash_deal');
+        Route::get('products/{flash_deal_id}', 'OfferController@get_flash_deal_products');
     });
 
     Route::post('subscribe-newsletter', 'CustomerController@subscribe_newsletter');
@@ -156,4 +171,5 @@ Route::group(['namespace' => 'Api\V1', 'middleware'=>'localization'], function (
             Route::post('/submit', 'DeliveryManReviewController@submit_review');
         });
     });
+
 });

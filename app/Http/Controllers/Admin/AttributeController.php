@@ -7,38 +7,54 @@ use App\Http\Controllers\Controller;
 use App\Model\Attribute;
 use App\Model\Translation;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class AttributeController extends Controller
 {
-    function index(Request $request)
+    public function __construct(
+        private Attribute   $attribute,
+        private Translation $translation
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Factory|View|Application
+     */
+    function index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
-        if($request->has('search'))
-        {
+        if ($request->has('search')) {
             $key = explode(' ', $request['search']);
-            $attributes=Attribute::where(function ($q) use ($key) {
-                        foreach ($key as $value) {
-                            $q->orWhere('name', 'like', "%{$value}%");
-                        }
+            $attributes = $this->attribute->where(function ($q) use ($key) {
+                foreach ($key as $value) {
+                    $q->orWhere('name', 'like', "%{$value}%");
+                }
             })->orderBy('name');
             $query_param = ['search' => $request['search']];
-        }else{
-            $attributes=Attribute::orderBy('name');
+        } else {
+            $attributes = $this->attribute->orderBy('name');
         }
-        $attributes=$attributes->latest()->paginate(Helpers::getPagination())->appends($query_param);
-        return view('admin-views.attribute.index', compact('attributes','search'));
+        $attributes = $attributes->latest()->paginate(Helpers::getPagination())->appends($query_param);
+        return view('admin-views.attribute.index', compact('attributes', 'search'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|unique:attributes',
-        ],[
-            'name.required'=>translate('Name is required'),
-            'name.unique'=>translate('Name is already taken'),
+        ], [
+            'name.required' => translate('Name is required'),
+            'name.unique' => translate('Name is already taken'),
         ]);
 
         foreach ($request->name as $name) {
@@ -48,45 +64,51 @@ class AttributeController extends Controller
             }
         }
 
-        $attribute = new Attribute;
+        $attribute = $this->attribute;
         $attribute->name = $request->name[array_search('en', $request->lang)];
         $attribute->save();
 
         $data = [];
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->name[$index] && $key != 'en')
-            {
-                array_push($data, Array(
-                    'translationable_type'  => 'App\Model\Attribute',
-                    'translationable_id'    => $attribute->id,
-                    'locale'                => $key,
-                    'key'                   => 'name',
-                    'value'                 => $request->name[$index],
-                ));
+        foreach ($request->lang as $index => $key) {
+            if ($request->name[$index] && $key != 'en') {
+                $data[] = array(
+                    'translationable_type' => 'App\Model\Attribute',
+                    'translationable_id' => $attribute->id,
+                    'locale' => $key,
+                    'key' => 'name',
+                    'value' => $request->name[$index],
+                );
             }
         }
-        if(count($data))
-        {
-            Translation::insert($data);
+        if (count($data)) {
+            $this->translation->insert($data);
         }
 
         Toastr::success(translate('Attribute added successfully!'));
         return back();
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Application|Factory|View
+     */
+    public function edit($id): View|Factory|Application
     {
-        $attribute = Attribute::withoutGlobalScopes()->with('translations')->find($id);
+        $attribute = $this->attribute->withoutGlobalScopes()->with('translations')->find($id);
         return view('admin-views.attribute.edit', compact('attribute'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
-            'name' => 'required|unique:attributes,name,'.$request->id,
-        ],[
-            'name.required'=>translate('Name is required'),
+            'name' => 'required|unique:attributes,name,' . $request->id,
+        ], [
+            'name.required' => translate('Name is required'),
         ]);
 
         foreach ($request->name as $name) {
@@ -96,20 +118,18 @@ class AttributeController extends Controller
             }
         }
 
-        $attribute = Attribute::find($id);
+        $attribute = $this->attribute->find($id);
         $attribute->name = $request->name[array_search('en', $request->lang)];
         $attribute->save();
 
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->name[$index] && $key != 'en')
-            {
-                Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Model\Attribute',
-                        'translationable_id'    => $attribute->id,
-                        'locale'                => $key,
-                        'key'                   => 'name'],
-                    ['value'                 => $request->name[$index]]
+        foreach ($request->lang as $index => $key) {
+            if ($request->name[$index] && $key != 'en') {
+                $this->translation->updateOrInsert(
+                    ['translationable_type' => 'App\Model\Attribute',
+                        'translationable_id' => $attribute->id,
+                        'locale' => $key,
+                        'key' => 'name'],
+                    ['value' => $request->name[$index]]
                 );
             }
         }
@@ -118,9 +138,13 @@ class AttributeController extends Controller
         return back();
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): RedirectResponse
     {
-        $attribute = Attribute::find($request->id);
+        $attribute = $this->attribute->find($request->id);
         $attribute->delete();
         Toastr::success(translate('Attribute removed!'));
         return back();

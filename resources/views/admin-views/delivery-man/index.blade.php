@@ -75,7 +75,7 @@
                                             <option value="passport">{{translate('passport')}}</option>
                                             <option value="driving_license">{{translate('driving')}} {{translate('license')}}</option>
                                             <option value="nid">{{translate('nid')}}</option>
-                                            <option value="restaurant_id">{{translate('restaurant')}} {{translate('id')}}</option>
+                                            <option value="restaurant_id">{{translate('store Id')}} {{translate('id')}}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -99,7 +99,7 @@
                                 </center>
                                 <div class="form-group mb-0">
                                     <label class="form-label d-block">
-                                        {{ translate('Deliveryman Image') }} <span class="text-danger">(Ratio 1:1)</span>
+                                        {{ translate('Deliveryman Image') }} <span class="text-danger">{{ translate('(Ratio 1:1)') }}</span>
                                     </label>
                                     <div class="custom-file">
                                         <input type="file" name="image" id="customFileUpload" class="custom-file-input h--45px" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" required>

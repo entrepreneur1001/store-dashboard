@@ -9,7 +9,7 @@ class Tag extends Model
     protected $table = 'tags';
     protected $fillable = ['tag'];
 
-    public function products()
+    public function products(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Product::class)->using('App\Model\ProductTag');
     }

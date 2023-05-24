@@ -134,6 +134,15 @@
                                         placeholder="{{ translate('Ex : 54ml') }}" required>
                                 </div>
                             </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label class="input-label"
+                                           for="exampleFormControlInput1">{{translate('Maximum_Order_Quantity')}}</label>
+                                    <input type="number" min="1" step="1" value="1" name="maximum_order_quantity"
+                                           class="form-control"
+                                           placeholder="{{ translate('Ex : 3') }}" required>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -145,7 +154,7 @@
                                     {{translate('Turning Visibility off will not show this product in the user app and website')}}
                                 </div>
                                 <div class="d-flex align-items-center mb-2 mb-sm-0">
-                                    <h5 class="mb-0 mr-2">Visibility</h5>
+                                    <h5 class="mb-0 mr-2">{{ translate('Visibility') }}</h5>
                                     <label class="toggle-switch my-0">
                                         <input type="checkbox" class="toggle-switch-input" name="status" value="1" checked>
                                         <span class="toggle-switch-label mx-auto text">
@@ -158,13 +167,38 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12">
+            <div class="col-lg-6">
                 <div class="card">
                     <div class="card-body">
                     <h5 class="mb-3">{{translate('product')}} {{translate('image')}} <small
                         class="text-danger">* ( {{translate('ratio')}} 1:1 )</small></h5>
                         <div class="product--coba">
                             <div class="row g-2" id="coba"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <span class="card-header-icon">
+                                <i class="tio-label"></i>
+                            </span>
+                            <span>
+                                {{translate('tags')}}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-2">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" name="tags" placeholder="Enter tags" data-role="tagsinput">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -277,6 +311,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col-12">
                 <div class="btn--container justify-content-end">
                     <a href="" class="btn btn--reset min-w-120px">{{translate('reset')}}</a>

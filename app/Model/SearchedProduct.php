@@ -16,7 +16,7 @@ class SearchedProduct extends Model
 
     protected $fillable = ['recent_search_id', 'product_id', 'user_id'];
 
-    public function product()
+    public function product(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }

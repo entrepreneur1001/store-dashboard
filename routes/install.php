@@ -28,3 +28,5 @@ Route::post('purchase_code', 'InstallController@purchase_code')->name('purchase.
 Route::fallback(function () {
     return redirect('/');
 });
+
+

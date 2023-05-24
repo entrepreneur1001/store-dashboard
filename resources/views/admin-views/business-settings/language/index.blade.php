@@ -19,22 +19,22 @@
         <ul class="nav nav-tabs border-0 mb-3">
             <li class="nav-item">
                 <a class="nav-link active" href="{{route('admin.business-settings.web-app.system-setup.language.index')}}">
-                    Language Setup
+                    {{ translate('Language Setup') }}
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.app_setting')}}">
-                    App Settings
+                    {{ translate('App Settings') }}
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.firebase_message_config_index')}}">
-                    Firebase Configuration
+                    {{ translate('Firebase Configuration') }}
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="{{route('admin.business-settings.web-app.system-setup.db-index')}}">
-                    Clean Database
+                    {{ translate('Clean Database') }}
                 </a>
             </li>
         </ul>
@@ -46,7 +46,7 @@
             <div class="alert alert--danger alert-danger mb-3" role="alert">
                 <div class="d-flex">
                     <span class="alert--icon"><i class="tio-info"></i></span>
-                    <strong class="text--title word-nobreak">{{translate('Note : ')}}</strong>
+                    <strong class="text--title word-nobreak">{{translate('note')}} : </strong>
                     <div class="w-0 flex-grow align-self-center pl-2">
                         {{translate('changing_some_settings_will_take_time_to_show_effect_please_clear_session_or_wait_for_60_minutes_else_browse_from_incognito_mode')}}
                     </div>
@@ -69,7 +69,7 @@
                                 <div class="form-group">
                                     <label class="col-form-label">{{translate('Country Code')}} </label>
                                     <select class="form-control js-select2-custom w-100" name="code">
-                                        <option value="en">English(default)</option>
+{{--                                        <option value="en">English(default)</option>--}}
                                         <option value="af">Afrikaans</option>
                                         <option value="sq">Albanian - shqip</option>
                                         <option value="am">Amharic - አማርኛ</option>

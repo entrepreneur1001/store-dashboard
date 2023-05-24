@@ -5,12 +5,22 @@ namespace App\Http\Controllers\Api\V1;
 use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
 use App\Model\Wishlist;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class WishlistController extends Controller
 {
-    public function add_to_wishlist(Request $request)
+
+    public function __construct(
+        private Wishlist $wishlist
+    ){}
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function add_to_wishlist(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'product_id' => 'required'
@@ -20,10 +30,10 @@ class WishlistController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        $wishlist = Wishlist::where('user_id', $request->user()->id)->where('product_id', $request->product_id)->first();
+        $wishlist = $this->wishlist->where('user_id', $request->user()->id)->where('product_id', $request->product_id)->first();
 
         if (empty($wishlist)) {
-            $wishlist = new Wishlist;
+            $wishlist = $this->wishlist;
             $wishlist->user_id = $request->user()->id;
             $wishlist->product_id = $request->product_id;
             $wishlist->save();
@@ -33,7 +43,11 @@ class WishlistController extends Controller
         return response()->json(['message' => 'Already in your wishlist'], 409);
     }
 
-    public function remove_from_wishlist(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function remove_from_wishlist(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'product_id' => 'required'
@@ -43,18 +57,18 @@ class WishlistController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        $wishlist = Wishlist::where('user_id', $request->user()->id)->where('product_id', $request->product_id)->first();
+        $wishlist = $this->wishlist->where('user_id', $request->user()->id)->where('product_id', $request->product_id)->first();
 
         if (!empty($wishlist)) {
-            Wishlist::where(['user_id' => $request->user()->id, 'product_id' => $request->product_id])->delete();
+            $this->wishlist->where(['user_id' => $request->user()->id, 'product_id' => $request->product_id])->delete();
             return response()->json(['message' => 'successfully removed!'], 200);
 
         }
         return response()->json(['message' => 'No such data found!'], 404);
     }
 
-    public function wish_list(Request $request)
+    public function wish_list(Request $request): \Illuminate\Http\JsonResponse
     {
-        return response()->json(Wishlist::where('user_id', $request->user()->id)->get(), 200);
+        return response()->json($this->wishlist->where('user_id', $request->user()->id)->get(), 200);
     }
 }

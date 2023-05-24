@@ -6,38 +6,55 @@ use App\CentralLogics\Helpers;
 use App\Http\Controllers\Controller;
 use App\Model\Branch;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 
 class   BranchController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private Branch $branch
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    public function index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if($request->has('search'))
         {
             $key = explode(' ', $request['search']);
-           $branches = Branch::where(function ($q) use ($key) {
+           $branches = $this->branch->where(function ($q) use ($key) {
                         foreach ($key as $value) {
                             $q->orWhere('name', 'like', "%{$value}%");
                         }
             })->orderBy('id', 'desc');
             $query_param = ['search' => $request['search']];
         }else{
-           $branches = Branch::orderBy('id', 'desc');
+           $branches = $this->branch->orderBy('id', 'desc');
         }
         $branches = $branches->paginate(Helpers::getPagination())->appends($query_param);
         return view('admin-views.branch.add-new', compact('branches','search'));
     }
 
-    public function list(Request $request)
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    public function list(Request $request): Factory|View|Application
     {
         $query_param = [];
         $search = $request['search'];
         if($request->has('search'))
         {
             $key = explode(' ', $request['search']);
-            $branches = Branch::where(function ($q) use ($key) {
+            $branches = $this->branch->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('name', 'like', "%{$value}%");
                     $q->orWhere('id', 'like', "%{$value}%");
@@ -45,13 +62,17 @@ class   BranchController extends Controller
             })->orderBy('id', 'desc');
             $query_param = ['search' => $request['search']];
         }else{
-            $branches = Branch::orderBy('id', 'desc');
+            $branches = $this->branch->orderBy('id', 'desc');
         }
         $branches = $branches->paginate(Helpers::getPagination())->appends($query_param);
         return view('admin-views.branch.list', compact('branches','search'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return Application|RedirectResponse|Redirector
+     */
+    public function store(Request $request): Redirector|RedirectResponse|Application
     {
         $request->validate([
             'name' => 'required|max:255|unique:branches',
@@ -74,7 +95,7 @@ class   BranchController extends Controller
             $image_name = 'def.png';
         }
 
-        $branch = new Branch();
+        $branch = $this->branch;
         $branch->name = $request->name;
         $branch->email = $request->email;
         $branch->phone = $request->phone;
@@ -89,13 +110,22 @@ class   BranchController extends Controller
         return redirect('admin/branch/list');
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Application|Factory|View
+     */
+    public function edit($id): View|Factory|Application
     {
-        $branch = Branch::find($id);
+        $branch = $this->branch->find($id);
         return view('admin-views.branch.edit', compact('branch'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): RedirectResponse
     {
         $request->validate([
             'name' => 'required|max:255',
@@ -106,7 +136,7 @@ class   BranchController extends Controller
             'email.unique' => translate('Email must be unique!'),
         ]);
 
-        $branch = Branch::find($id);
+        $branch = $this->branch->find($id);
         $branch->name = $request->name;
         $branch->email = $request->email;
         $branch->phone = $request->phone;
@@ -124,9 +154,13 @@ class   BranchController extends Controller
         return back();
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): RedirectResponse
     {
-        $branch = Branch::where('id', $request->id)->whereNotIn('id', [1])->first();
+        $branch = $this->branch->where('id', $request->id)->whereNotIn('id', [1])->first();
         if ($branch){
             $branch->delete();
             Toastr::success(translate('Branch removed!'));
@@ -136,9 +170,13 @@ class   BranchController extends Controller
         return back();
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): RedirectResponse
     {
-        $branch = Branch::find($request->id);
+        $branch = $this->branch->find($request->id);
         $branch->status = $request->status;
         $branch->save();
         Toastr::success(translate('Branch status updated!'));

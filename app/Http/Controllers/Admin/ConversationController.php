@@ -7,6 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Model\Admin;
 use App\Model\Conversation;
 use App\User;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -14,26 +18,44 @@ use Illuminate\Support\Str;
 
 class ConversationController extends Controller
 {
-    public function list()
-    {
-        $conversations = DB::table('conversations')->latest()->get();
+    public function __construct(
+        private Conversation $conversation,
+        private User $user,
+        private Admin $admin
+    ){}
 
-        $conversation_count = Conversation::distinct('user_id')->count();
+    /**
+     * @return Factory|View|Application
+     */
+    public function list(): View|Factory|Application
+    {
+        $conversations = $this->conversation->latest()->get();
+
+        $conversation_count = $this->conversation->distinct('user_id')->count();
         return view('admin-views.messages.index', compact('conversations', 'conversation_count'));
 
     }
 
-    public function view($user_id)
+    /**
+     * @param $user_id
+     * @return JsonResponse
+     */
+    public function view($user_id): JsonResponse
     {
-        $convs = Conversation::where(['user_id' => $user_id])->get();
-        Conversation::where(['user_id' => $user_id])->update(['checked' => 1]);
-        $user = User::find($user_id);
+        $convs = $this->conversation->where(['user_id' => $user_id])->get();
+        $this->conversation->where(['user_id' => $user_id])->update(['checked' => 1]);
+        $user = $this->user->find($user_id);
         return response()->json([
             'view' => view('admin-views.messages.partials._conversations', compact('convs', 'user'))->render()
         ]);
     }
 
-    public function store(Request $request, $user_id)
+    /**
+     * @param Request $request
+     * @param $user_id
+     * @return JsonResponse
+     */
+    public function store(Request $request, $user_id): JsonResponse
     {
         if (!$request->reply && empty($request->file('images'))) {
             return response()->json([], 403);
@@ -45,7 +67,7 @@ class ConversationController extends Controller
             foreach ($request->images as $img) {
                 $image = Helpers::upload('conversation/', 'png', $img);
                 $image_url = $image;
-                array_push($id_img_names, $image_url);
+                $id_img_names[] = $image_url;
             }
             $images = $id_img_names;
         } else {
@@ -62,8 +84,8 @@ class ConversationController extends Controller
             'updated_at' => now()
         ]);
 
-        $convs = Conversation::where(['user_id' => $user_id])->get();
-        $user = User::find($user_id);
+        $convs = $this->conversation->where(['user_id' => $user_id])->get();
+        $user = $this->user->find($user_id);
 
         //send push notification
         $fcm_token = $user->cm_firebase_token;
@@ -85,10 +107,14 @@ class ConversationController extends Controller
         ]);
     }
 
-    public function update_fcm_token(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update_fcm_token(Request $request): JsonResponse
     {
         try {
-            $admin = Admin::find(auth('admin')->id());
+            $admin = $this->admin->find(auth('admin')->id());
             $admin->fcm_token = $request->fcm_token;
             $admin->save();
 
@@ -98,15 +124,23 @@ class ConversationController extends Controller
         }
     }
 
-    public function get_conversations(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function get_conversations(Request $request): JsonResponse
     {
-        $conversations = DB::table('conversations')->latest()->get();
+        $conversations = $this->conversation->latest()->get();
         return response()->json([
             'conversation_sidebar' => view('admin-views.messages.partials._list', compact('conversations'))->render(),
         ]);
     }
 
-    public function get_firebase_config(Request $request)
+    /**
+     * @param Request $request
+     * @return mixed|null
+     */
+    public function get_firebase_config(Request $request): mixed
     {
         $config = Helpers::get_business_settings('firebase_message_config');
         return $config;

@@ -17,17 +17,17 @@
                         <form method="POST" action="{{route('update-system')}}">
                             @csrf
                             <div class="form-group">
-                                <label for="purchase_code">Codecanyon Username</label>
+                                <label for="purchase_code" class="gap-2 mb-2">Codecanyon Username</label>
                                 <input type="text" class="form-control" id="username" value="{{env('BUYER_USERNAME')}}"
                                        name="username" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="purchase_code">Purchase Code</label>
+                                <label for="purchase_code" class="gap-2 mb-2 mt-2">Purchase Code</label>
                                 <input type="text" class="form-control" id="purchase_key"
                                        value="{{env('PURCHASE_CODE')}}" name="purchase_key" required>
                             </div>
-                            <div class="text-center">
+                            <div class="text-center mt-4">
                                 <button type="submit" class="btn btn-info">Update</button>
                             </div>
                         </form>

@@ -128,27 +128,31 @@
                                 <div class="dropdown-divider"></div>
 
                                 <a class="dropdown-item" href="{{route('admin.settings')}}">
-                                    <span class="text-truncate pr-2" title="Settings">{{\App\CentralLogics\translate('settings')}}</span>
+                                    <span class="text-truncate pr-2" title="Settings">{{translate('settings')}}</span>
                                 </a>
 
                                 <div class="dropdown-divider"></div>
 
                                 <a class="dropdown-item" href="javascript:" onclick="Swal.fire({
-                                    title: '{{translate("Do you want to logout?")}}',
+                                    title: '{{ translate("Do you want to logout?") }}',
                                     showDenyButton: true,
                                     showCancelButton: true,
                                     confirmButtonColor: '#01684b',
                                     cancelButtonColor: '#363636',
-                                    confirmButtonText: `Yes`,
-                                    denyButtonText: `{{translate("Do not Logout")}}`,
+                                    confirmButtonText: '{{ translate("Yes") }}',
+                                    cancelButtonText: '{{ translate("No") }}',
                                     }).then((result) => {
                                     if (result.value) {
                                     location.href='{{route('admin.auth.logout')}}';
                                     } else{
-                                    Swal.fire('Canceled', '', 'info')
+                                        Swal.fire({
+                                        title: '{{translate("Canceled")}}',
+                                        confirmButtonText: '{{translate("Okay")}}',
+                                        })
                                     }
+
                                     })">
-                                    <span class="text-truncate pr-2" title="Sign out">{{\App\CentralLogics\translate('sign_out')}}</span>
+                                    <span class="text-truncate pr-2" title="Sign out">{{ translate('sign_out')}}</span>
                                 </a>
                             </div>
                         </div>

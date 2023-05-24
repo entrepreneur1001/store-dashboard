@@ -5,19 +5,33 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Model\TimeSlot;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TimeSlotController extends Controller
 {
-    public function add_new()
+    public function __construct(
+        private TimeSlot $time_slot
+    ){}
+
+    /**
+     * @return Application|Factory|View
+     */
+    public function add_new(): View|Factory|Application
     {
-        $timeSlots = TimeSlot::orderBy('start_time', 'asc')->get();
-        //return $timeSlots;
+        $timeSlots = $this->time_slot->orderBy('start_time', 'asc')->get();
         return view('admin-views.timeSlot.index', compact('timeSlots'));
     }
 
-    public function store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'start_time' => 'required',
@@ -27,7 +41,7 @@ class TimeSlotController extends Controller
         $start_time = $request->start_time;
         $end_time = $request->end_time;
         //time overlap check
-        $slots = TimeSlot::latest()->get(['start_time', 'end_time']);
+        $slots = $this->time_slot->latest()->get(['start_time', 'end_time']);
 
         foreach ($slots as $slot) {
             $exist_start = date('H:i', strtotime($slot->start_time));
@@ -55,13 +69,22 @@ class TimeSlotController extends Controller
         return back();
     }
 
-    public function edit($id)
+    /**
+     * @param $id
+     * @return Factory|View|Application
+     */
+    public function edit($id): View|Factory|Application
     {
-        $timeSlots = TimeSlot::where(['id' => $id])->first();
+        $timeSlots = $this->time_slot->where(['id' => $id])->first();
         return view('admin-views.timeSlot.edit', compact('timeSlots'));
     }
 
-    public function update(Request $request, $id)
+    /**
+     * @param Request $request
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function update(Request $request, $id): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
 
@@ -72,7 +95,7 @@ class TimeSlotController extends Controller
 
         $start_time = $request->start_time;
         $end_time = $request->end_time;
-        $slots = TimeSlot::where('id', '!=', $id)->get(['start_time', 'end_time']);
+        $slots = $this->time_slot->where('id', '!=', $id)->get(['start_time', 'end_time']);
 
         foreach ($slots as $slot) {
             $exist_start = date('H:i', strtotime($slot->start_time));
@@ -99,18 +122,26 @@ class TimeSlotController extends Controller
         return redirect()->route('admin.business-settings.store.timeSlot.add-new');
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $timeSlot = TimeSlot::find($request->id);
+        $timeSlot = $this->time_slot->find($request->id);
         $timeSlot->status = $request->status;
         $timeSlot->save();
         Toastr::success(translate('TimeSlot status updated!'));
         return back();
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $timeSlot = TimeSlot::find($request->id);
+        $timeSlot = $this->time_slot->find($request->id);
         $timeSlot->delete();
         Toastr::success(translate('Time Slot removed!'));
         return back();

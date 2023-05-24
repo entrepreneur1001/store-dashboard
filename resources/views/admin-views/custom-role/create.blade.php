@@ -128,8 +128,10 @@
                             <td class="text-capitalize">
                                 <div class="max-w-300px">
                                     @if($r['module_access']!=null)
+                                        @php($comma = '')
                                         @foreach((array)json_decode($r['module_access']) as $m)
-                                            {{str_replace('_',' ',$m)}}
+                                            {{$comma}}{{ translate(str_replace('_',' ',$m)) }}
+                                            @php($comma = ', ')
                                         @endforeach
                                     @endif
                                 </div>
@@ -182,24 +184,30 @@
 
 @push('script_2')
 
-<!--<script>
-    $('#select-all').on('change', function(){
-        if(this.checked === true) {
-            $('.check&#45;&#45;item-wrapper .check-item .form-check-input').attr('checked', true)
-        } else {
-            $('.check&#45;&#45;item-wrapper .check-item .form-check-input').attr('checked', false)
-        }
-    })
-
-</script>-->
 
 <script>
-    $("#select_all").on('change', function (){
-        if($("#select_all").is(":checked") === true){
-            //console.log($("#select_all").is(":checked"));
-            $(".module-permission").prop("checked", true);
-        }else{
-            $(".module-permission").removeAttr("checked");
+    $(document).ready(function() {
+        // Check or uncheck "Select All" based on other checkboxes
+        $(".module-permission").on('change', function (){
+            if ($(".module-permission:checked").length == $(".module-permission").length) {
+                $("#select_all").prop("checked", true);
+            } else {
+                $("#select_all").prop("checked", false);
+            }
+        });
+
+        // Check or uncheck all checkboxes based on "Select All" checkbox
+        $("#select_all").on('change', function (){
+            if ($("#select_all").is(":checked")) {
+                $(".module-permission").prop("checked", true);
+            } else {
+                $(".module-permission").prop("checked", false);
+            }
+        });
+
+        // Check "Select All" checkbox on page load if all checkboxes are checked
+        if ($(".module-permission:checked").length == $(".module-permission").length) {
+            $("#select_all").prop("checked", true);
         }
     });
 </script>

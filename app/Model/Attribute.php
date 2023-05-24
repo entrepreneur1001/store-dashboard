@@ -20,7 +20,7 @@ class Attribute extends Model
         return $this->translations[0]->value ?? $name;
     }
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::addGlobalScope('translate', function (Builder $builder) {
             $builder->with(['translations' => function($query){

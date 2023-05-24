@@ -135,7 +135,7 @@ class PaymobController extends Controller
             "auth_token" => $token,
             "amount_cents" => round($amount,2) * 100,
             "expiration" => 3600,
-            "order_id" => '',
+            "order_id" => $order->id,
             "billing_data" => $billingData,
             "currency" => "EGP",
             "integration_id" => $config['integration_id']
@@ -151,7 +151,9 @@ class PaymobController extends Controller
 
     public function callback(Request $request)
     {
-        $config = Helpers::get_business_settings('paymob_accept');
+       // $callback =$request['callback'];
+
+        $config = Helpers::get_business_settings('paymob');
         $data = $request->all();
         ksort($data);
         $hmac = $data['hmac'];
@@ -192,6 +194,14 @@ class PaymobController extends Controller
             //$order->payment_status = 'paid';
             //$order->transaction_reference = $request['trxID']??null;
             //$order->save();
+
+//            $token_string = 'payment_method=flutterwave&&transaction_reference=' . $transaction_reference;
+//
+//            if ($callback != null) {
+//                return redirect($callback . '/success' . '?token=' . base64_encode($token_string));
+//            } else {
+//                return \redirect()->route('payment-success', ['token' => base64_encode($token_string)]);
+//            }
 
             return response()->json(['message' => 'Payment succeeded'], 200);
         }

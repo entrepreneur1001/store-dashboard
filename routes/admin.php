@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
@@ -78,6 +79,16 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::delete('delete/{id}', 'BannerController@delete')->name('delete');
         });
 
+        Route::group(['prefix' => 'discount', 'as' => 'discount.','middleware'=>['module:promotion_management']], function () {
+            Route::get('add-new', 'DiscountController@index')->name('add-new');
+            Route::post('store', 'DiscountController@store')->name('store');
+            Route::get('edit/{id}', 'DiscountController@edit')->name('edit');
+            Route::post('update/{id}', 'DiscountController@update')->name('update');
+            Route::get('list', 'DiscountController@list')->name('list');
+            Route::get('status/{id}/{status}', 'DiscountController@status')->name('status');
+            Route::delete('delete/{id}', 'DiscountController@delete')->name('delete');
+        });
+
         Route::group(['prefix' => 'attribute', 'as' => 'attribute.','middleware'=>['module:product_management']], function () {
             Route::get('add-new', 'AttributeController@index')->name('add-new');
             Route::post('store', 'AttributeController@store')->name('store');
@@ -108,6 +119,9 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::post('search', 'DeliveryManController@search')->name('search');
             Route::get('status/{id}/{status}', 'DeliveryManController@status')->name('status');
             Route::get('export', 'DeliveryManController@export')->name('export');
+            Route::get('pending/list', 'DeliveryManController@pending_list')->name('pending');
+            Route::get('denied/list', 'DeliveryManController@denied_list')->name('denied');
+            Route::get('update-application/{id}/{status}', 'DeliveryManController@update_application')->name('application');
 
             Route::group(['prefix' => 'reviews', 'as' => 'reviews.'], function () {
                 Route::get('list', 'DeliveryManController@reviews_list')->name('list');
@@ -147,6 +161,8 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::get('limited-stock', 'ProductController@limited_stock')->name('limited-stock');
             Route::get('get-variations', 'ProductController@get_variations')->name('get-variations');
             Route::post('update-quantity', 'ProductController@update_quantity')->name('update-quantity');
+
+            Route::get('feature/{id}/{is_featured}', 'ProductController@feature')->name('feature');
 
         });
 
@@ -211,10 +227,9 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::post('update/{id}', 'CouponController@update');
             Route::get('status/{id}/{status}', 'CouponController@status')->name('status');
             Route::delete('delete/{id}', 'CouponController@delete')->name('delete');
-            Route::get('show/{id}', 'CouponController@show')->name('show');
+            Route::get('quick-view-details', 'CouponController@quick_view_details')->name('quick-view-details');
+
         });
-
-
 
         Route::group(['prefix' => 'business-settings', 'as' => 'business-settings.','middleware'=>['module:system_management']], function () {
 
@@ -233,6 +248,13 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
                 Route::get('main-branch-setup', 'BusinessSettingsController@main_branch_setup')->name('main-branch-setup')->middleware('actch');
                 Route::get('product-setup', 'BusinessSettingsController@product_setup')->name('product-setup');
                 Route::post('product-setup-update', 'BusinessSettingsController@product_setup_update')->name('product-setup-update');
+                Route::get('cookies-setup', 'BusinessSettingsController@cookies_setup')->name('cookies-setup');
+                Route::post('cookies-setup-update', 'BusinessSettingsController@cookies_setup_update')->name('cookies-setup-update');
+                Route::get('max-amount-status/{status}', 'BusinessSettingsController@max_amount_status')->name('max-amount-status');
+                Route::get('free-delivery-status/{status}', 'BusinessSettingsController@free_delivery_status')->name('free-delivery-status');
+                Route::get('dm-self-registration/{status}', 'BusinessSettingsController@dm_self_registration_status')->name('dm-self-registration');
+                Route::get('otp-setup', 'BusinessSettingsController@otp_setup')->name('otp-setup');
+                Route::post('otp-setup-update', 'BusinessSettingsController@otp_setup_update')->name('otp-setup-update');
 
                 Route::group(['prefix' => 'timeSlot', 'as' => 'timeSlot.'], function () {
                     Route::get('add-new', 'TimeSlotController@add_new')->name('add-new');
@@ -306,8 +328,10 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
 
                     Route::get('fcm-index', 'BusinessSettingsController@fcm_index')->name('fcm-index')->middleware('actch');
                     Route::post('update-fcm', 'BusinessSettingsController@update_fcm')->name('update-fcm');
-
                     Route::post('update-fcm-messages', 'BusinessSettingsController@update_fcm_messages')->name('update-fcm-messages');
+
+                    Route::get('chat-index', 'BusinessSettingsController@chat_index')->name('chat-index');
+                    Route::post('update-chat', 'BusinessSettingsController@update_chat')->name('update-chat');
 
                 });
 
@@ -327,6 +351,18 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
 
                 Route::get('faq', 'BusinessSettingsController@faq')->name('faq');
                 Route::post('faq', 'BusinessSettingsController@faq_update');
+
+                Route::get('cancellation-policy', 'BusinessSettingsController@cancellation_policy')->name('cancellation-policy');
+                Route::post('cancellation-policy', 'BusinessSettingsController@cancellation_policy_update');
+                Route::get('cancellation-policy/status/{status}', 'BusinessSettingsController@cancellation_policy_status')->name('cancellation-policy.status');
+
+                Route::get('refund-policy', 'BusinessSettingsController@refund_policy')->name('refund-policy');
+                Route::post('refund-policy', 'BusinessSettingsController@refund_policy_update');
+                Route::get('refund-policy/status/{status}', 'BusinessSettingsController@refund_policy_status')->name('refund-policy.status');
+
+                Route::get('return-policy', 'BusinessSettingsController@return_policy')->name('return-policy');
+                Route::post('return-policy', 'BusinessSettingsController@return_policy_update');
+                Route::get('return-policy/status/{status}', 'BusinessSettingsController@return_policy_status')->name('return-policy.status');
 
             });
 
@@ -348,6 +384,17 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             //Route::get('sale-report', 'ReportController@sale_report_index')->name('sale-report');
             Route::get('sale-report', 'ReportController@new_sale_report')->name('sale-report');
             Route::get('export-sale-report', 'ReportController@export_sale_report')->name('export-sale-report');
+            Route::get('expense', 'ReportController@expense_index')->name('expense');
+            Route::get('expense-export-excel', 'ReportController@expense_export_excel')->name('expense.export.excel');
+            Route::get('expense-export-pdf', 'ReportController@expense_summary_pdf')->name('expense.export.pdf');
+        });
+
+        Route::group(['prefix' => 'analytics', 'as' => 'analytics.','middleware'=>['module:report_management']], function () {
+            Route::get('keyword-search', [AnalyticController::class, 'get_keyword_search'])->name('keyword-search');
+            Route::get('customer-search', [AnalyticController::class, 'get_customer_search'])->name('customer-search');
+            Route::get('keyword-export-excel', 'AnalyticController@export_keyword_search')->name('keyword.export.excel');
+            Route::get('customer-export-excel', 'AnalyticController@export_customer_search')->name('customer.export.excel');
+
         });
 
         Route::group(['prefix' => 'customer', 'as' => 'customer.','middleware'=>['module:user_management']], function () {
@@ -358,6 +405,34 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::delete('delete/{id}', 'CustomerController@delete')->name('delete');
             Route::get('status/{id}/{status}', 'CustomerController@status')->name('status');
             Route::get('export', 'CustomerController@export_customer')->name('export');
+
+            Route::get('settings', 'CustomerController@settings')->name('settings');
+            Route::post('update-settings', 'CustomerController@update_settings')->name('update-settings');
+
+            Route::get('select-list', 'CustomerWalletController@get_customers')->name('select-list');
+
+            Route::group(['prefix' => 'wallet', 'as' => 'wallet.'], function () {
+                Route::get('add-fund', 'CustomerWalletController@add_fund_view')->name('add-fund');
+                Route::post('add-fund', 'CustomerWalletController@add_fund')->name('add-fund-store');
+                Route::get('report', 'CustomerWalletController@report')->name('report');
+            });
+
+            Route::get('loyalty-point/report', 'LoyaltyPointController@report')->name('loyalty-point.report');
         });
+
+        Route::group(['prefix' => 'offer', 'as' => 'offer.'], function () {
+            Route::get('flash-index', 'OfferController@flash_index')->name('flash.index');
+            Route::post('flash-store', 'OfferController@flash_store')->name('flash.store');
+            Route::get('flash/edit/{id}', 'OfferController@flash_edit')->name('flash.edit');
+            Route::post('flash/update/{id}', 'OfferController@flash_update')->name('flash.update');
+            Route::get('flash/status/{id}/{status}', 'OfferController@status')->name('flash.status');
+            Route::delete('flash/delete/{id}', 'OfferController@delete')->name('flash.delete');
+
+            Route::get('flash/add-product/{flash_deal_id}', 'OfferController@flash_add_product')->name('flash.add-product');
+            Route::post('flash/add-product/{flash_deal_id}', 'OfferController@flash_product_store')->name('flash.add-product.store');
+            Route::post('flash/delete-product', 'OfferController@delete_flash_product')->name('flash.delete.product');
+        });
+
+
     });
 });

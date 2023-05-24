@@ -8,19 +8,35 @@ use App\Model\FlashDeal;
 use App\Model\FlashDealProduct;
 use App\Model\Product;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class OfferController extends Controller
 {
-    public function flash_index(Request $request)
+    public function __construct(
+        private FlashDeal $flash_deal,
+        private FlashDealProduct $flash_deal_product,
+        private Product $product
+    ){}
+
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    public function flash_index(Request $request): View|Factory|Application
     {
         $query_param = [];
         $search = $request['search'];
         if ($request->has('search')) {
             $key = explode(' ', $request['search']);
-            $flash_deal = FlashDeal::withCount('products')
+            $flash_deal = $this->flash_deal->withCount('products')
                 ->where('deal_type', 'flash_deal')
                 ->where(function ($q) use ($key) {
                     foreach ($key as $value) {
@@ -29,14 +45,18 @@ class OfferController extends Controller
                 });
             $query_param = ['search' => $request['search']];
         } else {
-            $flash_deal = FlashDeal::withCount('products')->where('deal_type', 'flash_deal');
+            $flash_deal = $this->flash_deal->withCount('products')->where('deal_type', 'flash_deal');
         }
         $flash_deals = $flash_deal->latest()->paginate(Helpers::getPagination())->appends($query_param);
-        //return($flash_deals);
+
         return view('admin-views.offer.flash-deal-index', compact('flash_deals', 'search'));
     }
 
-    public function flash_store(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function flash_store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'title' => 'required|max:255',
@@ -53,7 +73,7 @@ class OfferController extends Controller
             $image_name = 'def.png';
         }
 
-        $flash_deal = new FlashDeal();
+        $flash_deal = $this->flash_deal;
         $flash_deal->title = $request->title;
         $flash_deal->start_date = $request->start_date;
         $flash_deal->end_date = $request->end_date;
@@ -66,36 +86,55 @@ class OfferController extends Controller
         return back();
     }
 
-    public function status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function status(Request $request): \Illuminate\Http\RedirectResponse
     {
-        FlashDeal::where(['status' => 1])->update(['status' => 0]);
-        $flash_deal = FlashDeal::find($request->id);
+        $this->flash_deal->where(['status' => 1])->update(['status' => 0]);
+        $flash_deal = $this->flash_deal->find($request->id);
         $flash_deal->status = $request->status;
         $flash_deal->save();
         Toastr::success(translate('Flash deal status updated!'));
         return back();
     }
 
-    public function delete(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function delete(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $flash_deal = FlashDeal::find($request->id);
+        $flash_deal = $this->flash_deal->find($request->id);
         if (Storage::disk('public')->exists('offer/' . $flash_deal['image'])) {
             Storage::disk('public')->delete('offer/' . $flash_deal['image']);
         }
-        $flash_deal_product_ids = FlashDealProduct::where(['flash_deal_id' => $request->id])->pluck('product_id');
+        $flash_deal_product_ids = $this->flash_deal_product->where(['flash_deal_id' => $request->id])->pluck('product_id');
         $flash_deal->delete();
-        FlashDealProduct::whereIn('id', $flash_deal_product_ids)->delete();
+
+        $this->flash_deal_product->whereIn('id', $flash_deal_product_ids)->delete();
+
         Toastr::success(translate('Flash deal removed!'));
         return back();
     }
 
-    public function flash_edit($flash_deal_id)
+    /**
+     * @param $flash_deal_id
+     * @return Factory|View|Application
+     */
+    public function flash_edit($flash_deal_id): View|Factory|Application
     {
-        $flash_deal = FlashDeal::find($flash_deal_id);
+        $flash_deal = $this->flash_deal->find($flash_deal_id);
         return view('admin-views.offer.edit-flash-deal', compact('flash_deal'));
     }
 
-    public function flash_update(Request $request, $flash_deal_id)
+    /**
+     * @param Request $request
+     * @param $flash_deal_id
+     * @return RedirectResponse
+     */
+    public function flash_update(Request $request, $flash_deal_id): \Illuminate\Http\RedirectResponse
     {
         $request->validate([
             'title' => 'required|max:255',
@@ -105,34 +144,42 @@ class OfferController extends Controller
             'title.required'=>translate('Title is required'),
         ]);
 
-        $flash_deal = FlashDeal::find($flash_deal_id);
+        $flash_deal = $this->flash_deal->find($flash_deal_id);
         $flash_deal->title = $request->title;
         $flash_deal->start_date = $request->start_date;
         $flash_deal->end_date = $request->end_date;
         $flash_deal->image = $request->has('image') ? Helpers::update('offer/', $flash_deal->image, 'png', $request->file('image')) : $flash_deal->image;
-        ;
         $flash_deal->save();
         Toastr::success(translate('Flash deal updated successfully!'));
         return redirect()->route('admin.offer.flash.index');
     }
 
-    public function flash_add_product($flash_deal_id)
+    /**
+     * @param $flash_deal_id
+     * @return Factory|View|Application
+     */
+    public function flash_add_product($flash_deal_id): View|Factory|Application
     {
-        $flash_deal = FlashDeal::where('id', $flash_deal_id)->first();
-        $flash_deal_product_ids = FlashDealProduct::where('flash_deal_id', $flash_deal_id)->pluck('product_id');
-        $flash_deal_products = Product::whereIn('id', $flash_deal_product_ids)->paginate(Helpers::getPagination());
-        $products = Product::active()->orderBy('name', 'asc')->get();
+        $flash_deal = $this->flash_deal->where('id', $flash_deal_id)->first();
+        $flash_deal_product_ids = $this->flash_deal_product->where('flash_deal_id', $flash_deal_id)->pluck('product_id');
+        $flash_deal_products = $this->product->whereIn('id', $flash_deal_product_ids)->paginate(Helpers::getPagination());
+        $products = $this->product->active()->orderBy('name', 'asc')->get();
 
-        // dd($flash_deal);
         return view('admin-views.offer.add-product-index', compact('flash_deal', 'flash_deal_products', 'products'));
     }
 
-    public function flash_product_store(Request $request, $flash_deal_id)
+    /**
+     * @param Request $request
+     * @param $flash_deal_id
+     * @return RedirectResponse
+     * @throws ValidationException
+     */
+    public function flash_product_store(Request $request, $flash_deal_id): RedirectResponse
     {
         $this->validate($request, [
             'product_id' => 'required'
         ]);
-        $flash_deal_products = FlashDealProduct::where(['flash_deal_id' => $flash_deal_id, 'product_id' => $request['product_id']])->first();
+        $flash_deal_products = $this->flash_deal_product->where(['flash_deal_id' => $flash_deal_id, 'product_id' => $request['product_id']])->first();
 
         if(!isset($flash_deal_products))
         {
@@ -152,9 +199,13 @@ class OfferController extends Controller
         return back();
     }
 
-    public function delete_flash_product(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_flash_product(Request $request): JsonResponse
     {
-        FlashDealProduct::where(['product_id' => $request->id, 'flash_deal_id' => $request->flash_deal_id])->delete();
+        $this->flash_deal_product->where(['product_id' => $request->id, 'flash_deal_id' => $request->flash_deal_id])->delete();
         return response()->json();
     }
 }

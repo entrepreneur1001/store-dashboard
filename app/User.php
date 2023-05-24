@@ -5,6 +5,8 @@ namespace App;
 use App\Model\CustomerAddress;
 use App\Model\FavoriteProduct;
 use App\Model\Order;
+use App\Model\SearchedKeywordUser;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
@@ -19,7 +21,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name','f_name', 'l_name', 'phone', 'email', 'password',
+        'name','f_name', 'l_name', 'phone', 'email', 'password', 'loyalty_point', 'wallet_balance', 'referral_code', 'referred_by'
     ];
 
     /**
@@ -39,10 +41,17 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_phone_verified' => 'integer',
+        'loyalty_point' => 'float',
+        'wallet_balance' => 'float',
     ];
 
     public function orders(){
         return $this->hasMany(Order::class,'user_id');
+    }
+
+    public function visited_products(): HasMany
+    {
+        return $this->hasMany(VisitedProduct::class, 'user_id', 'id');
     }
 
     public function addresses(){
@@ -61,5 +70,10 @@ class User extends Authenticatable
             $total_amount += $order->order_amount;
         }
         return $total_amount;
+    }
+
+    public function search_volume()
+    {
+        return $this->hasMany(SearchedKeywordUser::class, 'user_id', 'id');
     }
 }

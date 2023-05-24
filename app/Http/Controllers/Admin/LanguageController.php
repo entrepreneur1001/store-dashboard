@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\CentralLogics\helpers;
 use Illuminate\Support\Facades\DB;
@@ -14,11 +18,22 @@ use RecursiveIteratorIterator;
 
 class LanguageController extends Controller
 {
-    public function index()
+    public function __construct(
+        private BusinessSetting $business_setting
+    ){}
+
+    /**
+     * @return Factory|View|Application
+     */
+    public function index(): View|Factory|Application
     {
         return view('admin-views.business-settings.language.index');
     }
 
+    /**
+     * @param Request $request
+     * @return RedirectResponse|void
+     */
     public function store(Request $request)
     {
         $language = Helpers::get_business_settings('language');
@@ -36,11 +51,11 @@ class LanguageController extends Controller
                     $default = array('default' => ($data['code'] == 'en') ? true : false);
                     $data = array_merge($data, $default);
                 }
-                array_push($lang_array, $data);
-                array_push($codes, $data['code']);
+                $lang_array[] = $data;
+                $codes[] = $data['code'];
             }
         }
-        array_push($codes, $request['code']);
+        $codes[] = $request['code'];
 
         if (!file_exists(base_path('resources/lang/' . $request['code']))) {
             mkdir(base_path('resources/lang/' . $request['code']), 0777, true);
@@ -50,7 +65,7 @@ class LanguageController extends Controller
         $read = file_get_contents(base_path('resources/lang/en/messages.php'));
         fwrite($lang_file, $read);
 
-        array_push($lang_array, [
+        $lang_array[] = [
             'id' => count($language) + 1,
             'name' => $request['name'],
             'code' => $request['code'],
@@ -58,9 +73,9 @@ class LanguageController extends Controller
             'direction' => 'ltr',   //since no rtl in version 1.0
             'status' => 0,
             'default' => false,
-        ]);
+        ];
 
-        BusinessSetting::updateOrInsert(['key' => 'language'], [
+        $this->business_setting->updateOrInsert(['key' => 'language'], [
             'value' => $lang_array
         ]);
 
@@ -68,7 +83,11 @@ class LanguageController extends Controller
         return back();
     }
 
-    public function update_status(Request $request)
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    public function update_status(Request $request): mixed
     {
         $language = Helpers::get_business_settings('language');
         $lang_array = [];
@@ -82,7 +101,6 @@ class LanguageController extends Controller
                     'status' => $data['status'] == 1 ? 0 : 1,
                     'default' => (array_key_exists('default', $data) ? $data['default'] : (($data['code'] == 'en') ? true : false)),
                 ];
-                array_push($lang_array, $lang);
             } else {
                 $lang = [
                     'id' => $data['id'],
@@ -92,17 +110,21 @@ class LanguageController extends Controller
                     'status' => $data['status'],
                     'default' => (array_key_exists('default', $data) ? $data['default'] : (($data['code'] == 'en') ? true : false)),
                 ];
-                array_push($lang_array, $lang);
             }
+            $lang_array[] = $lang;
         }
-        $businessSetting = BusinessSetting::where('key', 'language')->update([
+        $businessSetting = $this->business_setting->where('key', 'language')->update([
             'value' => $lang_array
         ]);
 
         return $businessSetting;
     }
 
-    public function update_default_status(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function update_default_status(Request $request): RedirectResponse
     {
         $language = Helpers::get_business_settings('language');
         $lang_array = [];
@@ -116,7 +138,6 @@ class LanguageController extends Controller
                     'status' => 1,
                     'default' => true,
                 ];
-                array_push($lang_array, $lang);
             } else {
                 $lang = [
                     'id' => $data['id'],
@@ -126,10 +147,10 @@ class LanguageController extends Controller
                     'status' => $data['status'],
                     'default' => false,
                 ];
-                array_push($lang_array, $lang);
             }
+            $lang_array[] = $lang;
         }
-        BusinessSetting::where('key', 'language')->update([
+        $this->business_setting->where('key', 'language')->update([
             'value' => $lang_array
         ]);
 
@@ -137,7 +158,11 @@ class LanguageController extends Controller
         return back();
     }
 
-    public function update(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function update(Request $request): RedirectResponse
     {
         $language = Helpers::get_business_settings('language');
         $lang_array = [];
@@ -151,7 +176,6 @@ class LanguageController extends Controller
                     'status' => $data['status'] ?? 0,
                     'default' => (array_key_exists('default', $data) ? $data['default'] : (($data['code'] == 'en') ? true : false)),
                 ];
-                array_push($lang_array, $lang);
             } else {
                 $lang = [
                     'id' => $data['id'],
@@ -161,28 +185,37 @@ class LanguageController extends Controller
                     'status' => $data['status'],
                     'default' => (array_key_exists('default', $data) ? $data['default'] : (($data['code'] == 'en') ? true : false)),
                 ];
-                array_push($lang_array, $lang);
             }
+            $lang_array[] = $lang;
         }
-        BusinessSetting::where('key', 'language')->update([
+        $this->business_setting->where('key', 'language')->update([
             'value' => $lang_array
         ]);
         Toastr::success(translate('Language updated!'));
         return back();
     }
 
-    public function translate($lang)
+    /**
+     * @param $lang
+     * @return Factory|View|Application
+     */
+    public function translate($lang): View|Factory|Application
     {
         $full_data = include(base_path('resources/lang/' . $lang . '/messages.php'));
         $lang_data = [];
         ksort($full_data);
         foreach ($full_data as $key => $data) {
-            array_push($lang_data, ['key' => $key, 'value' => $data]);
+            $lang_data[] = ['key' => $key, 'value' => $data];
         }
         return view('admin-views.business-settings.language.translate', compact('lang', 'lang_data'));
     }
 
-    public function translate_key_remove(Request $request, $lang)
+    /**
+     * @param Request $request
+     * @param $lang
+     * @return void
+     */
+    public function translate_key_remove(Request $request, $lang): void
     {
         $full_data = include(base_path('resources/lang/' . $lang . '/messages.php'));
         unset($full_data[$request['key']]);
@@ -190,7 +223,12 @@ class LanguageController extends Controller
         file_put_contents(base_path('resources/lang/' . $lang . '/messages.php'), $str);
     }
 
-    public function translate_submit(Request $request, $lang)
+    /**
+     * @param Request $request
+     * @param $lang
+     * @return void
+     */
+    public function translate_submit(Request $request, $lang): void
     {
         $full_data = include(base_path('resources/lang/' . $lang . '/messages.php'));
         $full_data[$request['key']] = $request['value'];
@@ -198,7 +236,11 @@ class LanguageController extends Controller
         file_put_contents(base_path('resources/lang/' . $lang . '/messages.php'), $str);
     }
 
-    public function delete($lang)
+    /**
+     * @param $lang
+     * @return RedirectResponse
+     */
+    public function delete($lang): RedirectResponse
     {
         $language = Helpers::get_business_settings('language');
 
@@ -220,11 +262,11 @@ class LanguageController extends Controller
                     'status' => ($del_default == true && $data['code'] == 'en') ? 1 : $data['status'],
                     'default' => ($del_default == true && $data['code'] == 'en') ? true : (array_key_exists('default', $data) ? $data['default'] : (($data['code'] == 'en') ? true : false)),
                 ];
-                array_push($lang_array, $lang_data);
+                $lang_array[] = $lang_data;
             }
         }
 
-        BusinessSetting::where('key', 'language')->update([
+        $this->business_setting->where('key', 'language')->update([
             'value' => $lang_array
         ]);
 
@@ -244,7 +286,11 @@ class LanguageController extends Controller
         return back();
     }
 
-    public function lang($local)
+    /**
+     * @param $local
+     * @return RedirectResponse
+     */
+    public function lang($local): \Illuminate\Http\RedirectResponse
     {
         $direction = 'ltr';
         $language = Helpers::get_business_settings('language');

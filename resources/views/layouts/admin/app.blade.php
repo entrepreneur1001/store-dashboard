@@ -7,6 +7,8 @@
     <!-- Title -->
     <title>@yield('title')</title>
     <!-- Favicon -->
+    @php($icon = \App\Model\BusinessSetting::where(['key' => 'fav_icon'])->first()->value)
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/app/public/restaurant/' . $icon ?? '') }}">
     <link rel="shortcut icon" href="">
     <!-- Font -->
     <!-- CSS Implementing Plugins -->
@@ -198,7 +200,7 @@
     @endif
 
     function check_order() {
-        location.href = '{{route('admin.order.list',['status'=>'pending'])}}';
+        location.href = '{{route('admin.order.list',['status'=>'all'])}}';
     }
 
     function route_alert(route, message) {
@@ -247,14 +249,14 @@
     function status_change_alert(url, message, e) {
         e.preventDefault();
         Swal.fire({
-            title: 'Are you sure?',
+            title: '{{ translate("Are you sure?") }}',
             text: message,
             type: 'warning',
             showCancelButton: true,
             cancelButtonColor: 'default',
             confirmButtonColor: '#107980',
-            cancelButtonText: 'No',
-            confirmButtonText: 'Yes',
+            confirmButtonText: '{{ translate("Yes") }}',
+            cancelButtonText: '{{ translate("No") }}',
             reverseButtons: true
         }).then((result) => {
             if (result.value) {

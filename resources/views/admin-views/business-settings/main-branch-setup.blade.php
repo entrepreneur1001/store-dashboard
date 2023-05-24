@@ -117,24 +117,37 @@
                                                     <div class="row g-3">
                                                         <div class="col-12">
                                                             <div class="form-group mb-0">
-                                                                <label class="input-label">{{translate('latitude')}}</label>
-                                                                <input type="number" name="latitude" id="latitude" class="form-control" placeholder="{{ translate('Ex : -132.44442') }}" maxlength="255" value="{{ $main_branch->latitude }}" step="any" required>
+                                                                <label class="form-label text-capitalize" for="latitude">{{ translate('latitude') }}
+                                                                    <i class="tio-info-outined"
+                                                                       data-toggle="tooltip"
+                                                                       data-placement="top"
+                                                                       title="{{ translate('click_on_the_map_select_your_default_location') }}">
+                                                                    </i>
+                                                                </label>
+                                                                <input type="text" name="latitude" id="latitude" class="form-control" placeholder="{{ translate('Ex : -132.44442') }}" maxlength="255" value="{{ $main_branch->latitude }}" step="any" required readonly>
                                                             </div>
                                                         </div>
                                                         <div class="col-12">
                                                             <div class="form-group mb-0">
-                                                                <label class="input-label">{{translate('longitude')}}</label>
-                                                                <input type="number" name="longitude" id="longitude" class="form-control" placeholder="{{ translate('Ex : 94.233') }}" maxlength="255" value="{{ $main_branch->longitude }}" step="any" required>
+                                                                <label class="form-label text-capitalize" for="longitude">{{ translate('longitude') }}
+                                                                    <i class="tio-info-outined"
+                                                                       data-toggle="tooltip"
+                                                                       data-placement="top"
+                                                                       title="{{ translate('click_on_the_map_select_your_default_location') }}">
+                                                                    </i>
+                                                                </label>
+                                                                <input type="text" name="longitude" id="longitude" class="form-control" placeholder="{{ translate('Ex : 94.233') }}" maxlength="255" value="{{ $main_branch->longitude }}" step="any" required readonly>
                                                             </div>
                                                         </div>
                                                         <div class="col-12">
                                                             <div class="form-group mb-0">
                                                                 <label class="input-label">
+                                                                    {{translate('coverage (km)')}}
                                                                     <i class="tio-info-outined"
                                                                        data-toggle="tooltip"
                                                                        data-placement="top"
-                                                                       title="{{ translate('This value is the radius from your branch location, and customer can order food inside  the circle calculated by this radius.') }}"></i>
-                                                                    {{translate('coverage (km)')}}
+                                                                       title="{{ translate('This value is the radius from your branch location, and customer can order inside  the circle calculated by this radius. The coverage area value must be less or equal than 1000.') }}"></i>
+
                                                                 </label>
                                                                 <input type="number" name="coverage" min="1" max="1000" class="form-control" placeholder="{{ translate('Ex : 3') }}" value="{{ $main_branch->coverage }}" required>
                                                             </div>
@@ -170,7 +183,7 @@
 @push('script_2')
 
     <!-- Static Maps -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ \App\Model\BusinessSetting::where('key', 'map_api_key')->first()->value }}&libraries=places&v=3.45.8"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ \App\Model\BusinessSetting::where('key', 'map_api_client_key')->first()?->value }}&libraries=places&v=3.45.8"></script>
     <script>
         $( document ).ready(function() {
             function initAutocomplete() {

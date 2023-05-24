@@ -7163,3 +7163,15 @@ thead.sticky-header-original-thead tr td, thead.sticky-header-original-thead tr 
     z-index: 2;
     overflow-x: hidden
 }
+
+.h--45px ~ .select2 .select2-selection--single,
+.h--45px ~ .select2 .select2-selection--single .select2-selection__rendered {
+    height: 45px !important;
+    line-height: 45px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+}
+.select2-container--default .select2-selection--single {
+    border-color: var(--border-clr);
+}

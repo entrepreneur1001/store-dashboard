@@ -126,7 +126,7 @@
                 <div class="modal-body">
                     <center>
                         <input type="button" class="btn btn-primary non-printable" onclick="printDiv('printableArea')"
-                            value="Proceed, If thermal printer is ready."/>
+                            value="{{ translate('Proceed, If thermal printer is ready.') }}"/>
                         <a href="{{url()->previous()}}" class="btn btn-danger non-printable">{{translate('Back')}}</a>
                     </center>
                     <hr class="non-printable">
@@ -145,7 +145,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Add new customer</h5>
+                        <h5 class="modal-title">{{ translate('Add new customer') }}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">×</span>
                         </button>
@@ -156,34 +156,34 @@
                             <div class="row">
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group">
-                                        <label class="input-label">First name <span class="input-label-secondary text-danger">*</span></label>
-                                        <input type="text" name="f_name" class="form-control" value="" placeholder="First name" required="">
+                                        <label class="input-label">{{ translate('First name') }} <span class="input-label-secondary text-danger">*</span></label>
+                                        <input type="text" name="f_name" class="form-control" value="" placeholder="{{ translate('First name') }}First name" required="">
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group">
-                                        <label class="input-label">Last name <span class="input-label-secondary text-danger">*</span></label>
-                                        <input type="text" name="l_name" class="form-control" value="" placeholder="Last name" required="">
+                                        <label class="input-label">{{ translate('Last name') }} <span class="input-label-secondary text-danger">*</span></label>
+                                        <input type="text" name="l_name" class="form-control" value="" placeholder="{{ translate('Last name') }}" required="">
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group">
-                                        <label class="input-label">Email<span class="input-label-secondary text-danger">*</span></label>
-                                        <input type="email" name="email" class="form-control" value="" placeholder="Ex : ex@example.com" required="">
+                                        <label class="input-label">{{ translate('Email') }}<span class="input-label-secondary text-danger">*</span></label>
+                                        <input type="email" name="email" class="form-control" value="" placeholder="{{ translate('Ex : ex@example.com') }}" required="">
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group">
-                                        <label class="input-label">Phone (With country code)<span class="input-label-secondary text-danger">*</span></label>
-                                        <input type="text" name="phone" class="form-control" value="" placeholder="Phone" required="">
+                                        <label class="input-label">{{ translate('Phone (With country code)') }}<span class="input-label-secondary text-danger">*</span></label>
+                                        <input type="text" name="phone" class="form-control" value="" placeholder="{{ translate('Phone') }}" required="">
                                     </div>
                                 </div>
                             </div>
                             <div class="btn--container justify-content-end">
-                                <button type="reset" class="btn btn--reset">Reset</button>
-                                <button type="submit" id="submit_new_customer" class="btn btn--primary">Submit</button>
+                                <button type="reset" class="btn btn--reset">{{ translate('Reset') }}</button>
+                                <button type="submit" id="submit_new_customer" class="btn btn--primary">{{ translate('Submit') }}</button>
                             </div>
                         </form>
                     </div>
@@ -296,8 +296,21 @@
                     if (currentVal < input.attr('max')) {
                         input.val(currentVal + 1).change();
                     }
-                    if (parseInt(input.val()) == input.attr('max')) {
-                        $(this).attr('disabled', true);
+                    // if (parseInt(input.val()) == input.attr('max')) {
+                    //     $(this).attr('disabled', true);
+                    // }
+
+                    var qty_max_val = parseInt($('#check_max_qty').val());
+                    var qty_max_val = qty_max_val + 1;
+                    if (parseInt(input.val()) >= qty_max_val) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{translate("Cart")}}',
+                            text: '{{translate('stock limit exceeded')}}.',
+                            confirmButtonText: '{{translate("Yes")}}',
+                        });
+                        //$(this).val($(this).data());
+                        input.val(qty_max_val-1);
                     }
 
                 }
@@ -316,6 +329,9 @@
             maxValue = parseInt($(this).attr('max'));
             valueCurrent = parseInt($(this).val());
 
+            var input_qty_max_val = parseInt($('#check_max_qty').val());
+            var input_qty_max_val = input_qty_max_val + 1;
+
             var name = $(this).attr('name');
             if (valueCurrent >= minValue) {
                 $(".btn-number[data-type='minus'][data-field='" + name + "']").removeAttr('disabled')
@@ -328,7 +344,17 @@
                 });
                 $(this).val($(this).data('oldValue'));
             }
-            if (valueCurrent <= maxValue) {
+
+            if(valueCurrent >= input_qty_max_val){
+                console.log(input_qty_max_val);
+                Swal.fire({
+                    icon: 'error',
+                    title: '{{translate("Cart")}}',
+                    text: '{{translate('the maximum value was reached')}}',
+                    confirmButtonText: '{{translate("Yes")}}',
+                });
+                $(this).val(input_qty_max_val-1)
+            } else if (valueCurrent <= maxValue) {
                 $(".btn-number[data-type='plus'][data-field='" + name + "']").removeAttr('disabled')
             } else {
                 Swal.fire({
@@ -337,7 +363,7 @@
                     text: '{{translate('Sorry, stock limit exceeded')}}.',
                     confirmButtonText: '{{translate("Yes")}}',
                 });
-                $(this).val($(this).data('oldValue'));
+                $(this).val(1)
             }
         });
         $(".input-number").keydown(function (e) {

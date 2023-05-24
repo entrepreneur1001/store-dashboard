@@ -7,6 +7,7 @@ use App\Model\Admin;
 use App\Model\AdminRole;
 use App\Model\BusinessSetting;
 use App\Traits\ActivationClass;
+use App\User;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -27,11 +28,11 @@ class UpdateController extends Controller
         Helpers::setEnvironmentValue('SOFTWARE_ID', 'MzI3OTE2MzE=');
         Helpers::setEnvironmentValue('BUYER_USERNAME', $request['username']);
         Helpers::setEnvironmentValue('PURCHASE_CODE', $request['purchase_key']);
-        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '6.0');
+        Helpers::setEnvironmentValue('SOFTWARE_VERSION', '7.0');
         Helpers::setEnvironmentValue('APP_NAME', 'grofresh');
         Helpers::setEnvironmentValue('APP_MODE', 'live');
 
-        if (!$this->actch()) {
+        if ($this->actch()) {
             return redirect(base64_decode('aHR0cHM6Ly82YW10ZWNoLmNvbS9zb2Z0d2FyZS1hY3RpdmF0aW9u'));
         }
 
@@ -246,6 +247,169 @@ class UpdateController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        if (!BusinessSetting::where(['key' => 'wallet_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'wallet_status'], [
+                'value' => '0'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'loyalty_point_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'loyalty_point_status'], [
+                'value' => '0'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'ref_earning_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'ref_earning_status'], [
+                'value' => '0'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'loyalty_point_exchange_rate'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'loyalty_point_exchange_rate'], [
+                'value' => '0'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'ref_earning_exchange_rate'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'ref_earning_exchange_rate'], [
+                'value' => '0'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'loyalty_point_percent_on_item_purchase'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'loyalty_point_percent_on_item_purchase'], [
+                'value' => '0'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'loyalty_point_minimum_point'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'loyalty_point_minimum_point'], [
+                'value' => '1'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'free_delivery_over_amount'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'free_delivery_over_amount'], [
+                'value' => '2000'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'maximum_amount_for_cod_order'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'maximum_amount_for_cod_order'], [
+                'value' => '1000'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'cookies'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'cookies'], [
+                'value' => '{"status":"1","text":"Allow Cookies for this site"}'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'offline_payment'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'offline_payment'], [
+                'value' => '{"status":"1"}'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'product_vat_tax_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'product_vat_tax_status'], [
+                'value' => 'excluded'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'whatsapp'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'whatsapp'], [
+                'value' => '{"status":"0","number":""}'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'telegram'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'telegram'], [
+                'value' => '{"status":"0","user_name":""}'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'messenger'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'messenger'], [
+                'value' => '{"status":"0","user_name":""}'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'featured_product_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'featured_product_status'], [
+                'value' => '1'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'trending_product_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'trending_product_status'], [
+                'value' => '1'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'most_reviewed_product_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'most_reviewed_product_status'], [
+                'value' => '1'
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'recommended_product_status'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'recommended_product_status'], [
+                'value' => '1'
+            ]);
+        }
+
+        //user referral code
+        $users = User::whereNull('referral_code')->get();
+        foreach ($users as $user) {
+            $user->referral_code = Helpers::generate_referer_code();
+            $user->save();
+        }
+
+        if (!BusinessSetting::where(['key' => 'fav_icon'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'fav_icon'], [
+                'value' => ''
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'dm_self_registration'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'dm_self_registration'], [
+                'value' => 1
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'maximum_otp_hit'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'maximum_otp_hit'], [
+                'value' => 5
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'otp_resend_time'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'otp_resend_time'], [
+                'value' => 60
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'temporary_block_time'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'temporary_block_time'], [
+                'value' => 600
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'maximum_login_hit'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'maximum_login_hit'], [
+                'value' => 5
+            ]);
+        }
+
+        if (!BusinessSetting::where(['key' => 'temporary_login_block_time'])->first()) {
+            DB::table('business_settings')->updateOrInsert(['key' => 'temporary_login_block_time'], [
+                'value' => 600
+            ]);
+        }
 
         return redirect('/admin/auth/login');
     }
